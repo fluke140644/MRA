@@ -1,0 +1,250 @@
+{% extends "baseipd.html" %}
+{% block content %}
+
+<style>
+  .score-badge { min-width: 2.25rem; display:inline-block; text-align:center; }
+  .criterion { display:flex; align-items:center; justify-content:space-between; padding:.5rem .75rem; border-radius:.5rem; background:#f8f9fa; }
+  .criterion + .criterion { margin-top:.5rem; }
+  .card-soft { border: 1px solid rgba(0,0,0,.06); }
+
+  @keyframes move {
+  100% {
+    transform: translate3d(0, 0, 1px) rotate(360deg);
+  }
+}
+
+.background {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+  background: #ffffff00;
+  overflow: hidden;
+}
+
+.ball {
+  position: absolute;
+  width: 20vmin;
+  height: 20vmin;
+  border-radius: 50%;
+  backface-visibility: hidden;
+  animation: move linear infinite;
+  z-index: -1;
+}
+
+.ball:nth-child(odd) {
+    color: #22dfbf;
+}
+
+.ball:nth-child(even) {
+    color: #fffc46;
+}
+
+/* Using a custom attribute for variability */
+.ball:nth-child(1) {
+  top: 77%;
+  left: 88%;
+  animation-duration: 40s;
+  animation-delay: -20s;
+  transform-origin: 16vw -2vh;
+  box-shadow: 40vmin 0 5.703076368487546vmin currentColor;
+}
+.ball:nth-child(2) {
+  top: 42%;
+  left: 2%;
+  animation-duration: 53s;
+  animation-delay: -29s;
+  transform-origin: -19vw 21vh;
+  box-shadow: -40vmin 0 5.17594621519026vmin currentColor;
+}
+.ball:nth-child(3) {
+  top: 28%;
+  left: 18%;
+  animation-duration: 49s;
+  animation-delay: -25s;
+  transform-origin: -22vw 3vh;
+  box-shadow: 40vmin 0 5.248179047256236vmin currentColor;
+}
+.ball:nth-child(4) {
+  top: 50%;
+  left: 79%;
+  animation-duration: 26s;
+  animation-delay: -21s;
+  transform-origin: -17vw -6vh;
+  box-shadow: 40vmin 0 5.279749632220298vmin currentColor;
+}
+.ball:nth-child(5) {
+  top: 46%;
+  left: 15%;
+  animation-duration: 36s;
+  animation-delay: -40s;
+  transform-origin: 4vw 0vh;
+  box-shadow: -40vmin 0 5.964309466052033vmin currentColor;
+}
+.ball:nth-child(6) {
+  top: 77%;
+  left: 16%;
+  animation-duration: 31s;
+  animation-delay: -19s;
+  transform-origin: 18vw 4vh;
+  box-shadow: 40vmin 0 5.178483653434181vmin currentColor;
+}
+.ball:nth-child(7) {
+  top: 22%;
+  left: 17%;
+  animation-duration: 55s;
+  animation-delay: -56s;
+  transform-origin: 1vw -23vh;
+  box-shadow: -40vmin 0 5.703026794398318vmin currentColor;
+}
+.ball:nth-child(8) {
+  top: 41%;
+  left: 47%;
+  animation-duration: 43s;
+  animation-delay: -28s;
+  transform-origin: 25vw -3vh;
+  box-shadow: 40vmin 0 5.196265905749415vmin currentColor;
+}
+</style>
+<div class="background">
+  <!-- Using common classes to minimize redundancy -->
+  <span class="ball"></span>
+  <span class="ball"></span>
+  <span class="ball"></span>
+  <span class="ball"></span>
+  <span class="ball"></span>
+  <span class="ball"></span>
+</div>
+
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">{{ obj.title }}</h3>
+    <div class="d-flex gap-2" style="z-index: 2;">
+      <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
+      <a href="{% url 'MRA:score_create' %}" class="btn btn-primary">สร้างใหม่</a>
+      <button class="btn btn-outline-primary" onclick="window.print()">พิมพ์</button>
+    </div>
+  </div>
+
+  <!-- Summary -->
+  <div class="card card-soft mb-3">
+    <div class="card-body">
+      <div class="row g-3 align-items-center">
+        <div class="col-lg-8">
+          <div class="fs-5">
+            <strong>คะแนนรวม:</strong>
+            {{ obj.total_yes }}/{{ obj.total_counted }}
+            ({{ obj.percent|floatformat:1 }}%) 
+          </div>
+          <div class="text-muted mt-1">
+            <span class="me-3"><strong>คะแนนที่ได้ :</strong> {{ obj.final_score }}</span>
+            <span class="me-3"><strong>คะแนนเต็ม :</strong> {{ obj.total_counted }}</span>
+            <span><strong>บันทึกเมื่อ:</strong> {{ obj.created_at|date:"d/m/Y H:i" }}</span>
+          </div>
+
+          <!-- Progress bar สวย ๆ -->
+          <div class="progress mt-3" style="height: 30px; box-shadow: 0 6px 8px rgba(0,0,0,0.4) ">
+            <div class="progress-bar
+                        {% if obj.percent|floatformat:0 >= 80 %}bg-success
+                        {% elif obj.percent|floatformat:0 >= 50 %}bg-warning
+                        {% else %}bg-success{% endif %}"
+                 role="progressbar"
+                 style="width: {{ obj.percent|floatformat:0|add:"%" }}; box-shadow: 0 6px 8px rgba(0,0,0,0.6);"
+                 aria-valuenow="{{ obj.percent|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">{{ obj.final_score }} / {{ obj.total_counted }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Patient mini card (collapse trigger) -->
+        <div class="col-lg-4">
+          <div class="border rounded p-3 bg-light" style="box-shadow: 0 6px 8px rgba(0,0,0,0.4)">
+            <div class="d-flex justify-content-between">
+              <div>
+                <div><strong>Hcode :</strong> {{ obj.hcode }}</div>
+                <div><strong>HN :</strong> {{ obj.hn }}</div>
+                <div><strong>AN :</strong> {{ obj.an }}</div>
+              <div><strong>Hname :</strong> {{ obj.hname }}</div>
+              <div><strong>Admitted :</strong> {{ obj.date_admitted }}</div>
+              <div><strong>Discharged :</strong> {{ obj.date_discharged }}</div>
+              {% if obj.note %}
+              <hr class="my-2">
+              <div class="small text-muted"><strong>หมายเหตุรวม:</strong> {{ obj.note }}</div>
+              {% endif %}
+            </div>
+            </div>
+            
+          </div>
+        </div>
+      </div><!-- /row -->
+    </div>
+  </div>
+
+  <!-- Sections (accordion) -->
+  <div class="mb-3">
+  {% for sec in sections %}
+    <div class="card card-soft mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">{{ sec.index }}. {{ sec.title }}</span>
+        <span class="text-muted small">
+          {{ sec.stat.yes }}/{{ sec.stat.counted }} ({{ sec.stat.percent|floatformat:0 }}%)
+        </span>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <!-- คอลัมน์ซ้าย: เกณฑ์ 1–5 -->
+          <div class="col-lg-6">
+            {% for field in sec.rows|slice:":5" %}
+              <div class="criterion">
+                <span>เกณฑ์ {{ forloop.counter }}</span>
+                {% if field.value == '1' %}
+                  <span class="badge bg-success score-badge">1</span>
+                {% elif field.value == '0' %}
+                  <span class="badge bg-danger score-badge">0</span>
+                {% else %}
+                  <span class="badge bg-secondary score-badge">NA</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+
+          <!-- คอลัมน์ขวา: เกณฑ์ 6–9 -->
+          <div class="col-lg-6 mt-2 mt-lg-0">
+            {% for field in sec.rows|slice:"5:" %}
+              <div class="criterion">
+                <span>เกณฑ์ {{ forloop.counter|add:5 }}</span>
+                {% if field.value == '1' %}
+                  <span class="badge bg-success score-badge">1</span>
+                {% elif field.value == '0' %}
+                  <span class="badge bg-danger score-badge">0</span>
+                {% else %}
+                  <span class="badge bg-secondary score-badge">NA</span>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        {# หมายเหตุของหัวข้อนี้ #}
+        {% with n=sec.note.value %}
+          {% if n %}
+            <div class="mt-3 text-muted " style="font-size: 18px;">
+              <strong>หมายเหตุหัวข้อ:</strong> {{ n }}
+            </div>
+          {% endif %}
+        {% endwith %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+<script>
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.accordion-button');
+  if (btn && btn.tagName === 'BUTTON' && btn.type !== 'button') {
+    e.preventDefault();
+  }
+});
+</script>
+{% endblock %}

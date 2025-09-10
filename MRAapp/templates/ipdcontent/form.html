@@ -1,0 +1,233 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>บันทึกคะแนน IPD Content</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+<div class="max-w-6xl mx-auto p-6">
+  <div class="flex items-center justify-between mb-4">
+    <h1 class="text-2xl md:text-3xl font-bold">
+      การตรวจประเมินคุณภาพเวชระเบียนผู้ป่วยใน (แยกตามราย Content)
+    </h1>
+    <a href="/listformdata"
+       class="px-4 py-2 rounded-xl bg-slate-600 text-white hover:bg-slate-700">
+      ⬅
+    </a>
+  </div>
+
+  <form method="post" action="{% url 'ipdcontent_create' %}" class="space-y-6 bg-white rounded-2xl shadow p-4 md:p-6">
+    {% csrf_token %}
+
+    <!-- ===== ส่วนที่ 1: ข้อมูลพื้นฐาน ===== -->
+    <fieldset class="border-2 border-red-500 rounded-xl p-4">
+      <legend class="px-2 text-red-600 font-semibold">ส่วนที่ 1</legend>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- ปีงบประมาณ -->
+        <div>
+          <label class="block text-sm font-medium mb-1">ปีงบประมาณ (พ.ศ.) *</label>
+          <input type="number" name="fiscal_year" class="w-full border rounded-lg px-3 py-2"
+                 value="2025" placeholder="เช่น 2025 (ถ้าใช้ พ.ศ. ให้กรอก 2568)"/>
+        </div>
+
+        <!-- เดือน -->
+        <div>
+          <label class="block text-sm font-medium mb-1">เดือน *</label>
+          <select name="month" class="w-full border rounded-lg px-3 py-2" required>
+            <option value="" selected>กรุณาเลือกเดือนที่ต้องการบันทึก</option>
+            <option>มกราคม</option><option>กุมภาพันธ์</option><option>มีนาคม</option>
+            <option>เมษายน</option><option>พฤษภาคม</option><option>มิถุนายน</option>
+            <option>กรกฎาคม</option><option>สิงหาคม</option><option>กันยายน</option>
+            <option>ตุลาคม</option><option>พฤศจิกายน</option><option>ธันวาคม</option>
+          </select>
+        </div>
+
+        <!-- หน่วยงาน -->
+        <div>
+          <label class="block text-sm font-medium mb-1">หน่วยงาน/ภาควิชา</label>
+          <input type="text" name="department" class="w-full border rounded-lg px-3 py-2"
+                 placeholder="ระบุหน่วยงาน"/>
+        </div>
+
+        <!-- HN -->
+        <div>
+          <label class="block text-sm font-medium mb-1">H.N.</label>
+          <input type="text" name="hn" class="w-full border rounded-lg px-3 py-2" placeholder="หมายเลข HN"/>
+        </div>
+
+        <!-- AN -->
+        <div>
+          <label class="block text-sm font-medium mb-1">A.N.</label>
+          <input type="text" name="an" class="w-full border rounded-lg px-3 py-2" placeholder="หมายเลข AN"/>
+        </div>
+
+        <!-- Hname -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Hname</label>
+          <input type="text" name="hname" class="w-full border rounded-lg px-3 py-2" placeholder="ชื่อโรงพยาบาล"/>
+        </div>
+
+        <!-- Date Admitted -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Date Admitted</label>
+          <input type="date" name="date_admitted" class="w-full border rounded-lg px-3 py-2"/>
+        </div>
+
+        <!-- Date Discharged -->
+        <div>
+          <label class="block text-sm font-medium mb-1">Date Discharged</label>
+          <input type="date" name="date_discharged" class="w-full border rounded-lg px-3 py-2"/>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ===== ส่วนที่ 2: รายการประเมิน 12 ข้อ ===== -->
+    <fieldset class="border-2 border-yellow-400 rounded-xl p-4">
+      <legend class="px-2 text-yellow-600 font-semibold">ส่วนที่ 2</legend>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% comment %} 1-12 {% endcomment %}
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">1. Discharge summary : Dx., OP.</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_1" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">2. Discharge summary : Other</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_2" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">3. Informed consent</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_3" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">4. History</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_4" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">5. Physical exam</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_5" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">6. Progress note</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_6" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">7. Consultation record</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_7" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">8. Anesthetic record</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_8" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">9. Operative note</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_9" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">10. Labour record</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_10" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">11. Rehabilitation record</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_11" placeholder="คะแนนที่ได้"/>
+        </div>
+
+        <div class="bg-green-50 rounded-xl p-3">
+          <label class="block text-sm font-semibold mb-1">12. Nurses' note helpful</label>
+          <input type="number" min="0" max="5" step="1" data-score class="w-full border rounded-lg px-3 py-2"
+                 name="score_12" placeholder="คะแนนที่ได้"/>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- ===== ส่วนที่ 3: สรุปผล ===== -->
+    <fieldset class="border-2 border-blue-500 rounded-xl p-4">
+      <legend class="px-2 text-blue-600 font-semibold">ส่วนที่ 3</legend>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">คะแนนเต็ม (Full score)</label>
+          <input type="number" min="0" step="1" id="fullScore" name="full_score"
+                 value="100" class="w-full border rounded-lg px-3 py-2"/>
+          <p class="text-xs text-gray-500 mt-1">(ตัวอย่างกำหนด 100 คะแนน)</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">คะแนนที่ได้ (Sum score)</label>
+          <input type="number" readonly id="sumScore" name="sum_score"
+                 class="w-full border rounded-lg px-3 py-2 bg-gray-50"/>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">ร้อยละ</label>
+          <input type="text" readonly id="percentScore" name="percent"
+                 class="w-full border rounded-lg px-3 py-2 bg-gray-50" />
+        </div>
+      </div>
+
+      <p class="text-pink-600 text-sm mt-2">
+        * ข้อใดไม่ส่งควบคุม คิดคะแนนรวม 100 คะแนน (ปรับได้)
+      </p>
+    </fieldset>
+
+    <div class="flex items-center gap-3">
+      <button type="submit" class="px-6 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+        บันทึก
+      </button>
+      <a href="/listformdata" class="px-6 py-2 rounded-xl bg-yellow-500 text-white hover:bg-yellow-600">
+        ยกเลิก
+      </a>
+    </div>
+  </form>
+</div>
+
+<!-- ===== Logic คำนวณผลรวม/ร้อยละ ===== -->
+<script>
+  const scoreInputs = document.querySelectorAll('[data-score]');
+  const sumEl = document.getElementById('sumScore');
+  const fullEl = document.getElementById('fullScore');
+  const percentEl = document.getElementById('percentScore');
+
+  function recalc() {
+    const sum = Array.from(scoreInputs)
+      .map(i => Number(i.value || 0))
+      .reduce((a, b) => a + b, 0);
+
+    const full = Number(fullEl.value || 0);
+    sumEl.value = sum;
+
+    const pct = full > 0 ? (sum / full) * 100 : 0;
+    percentEl.value = pct.toFixed(2) + ' %';
+  }
+
+  scoreInputs.forEach(i => i.addEventListener('input', recalc));
+  fullEl.addEventListener('input', recalc);
+</script>
+</body>
+</html>

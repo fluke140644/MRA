@@ -1,0 +1,68 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายการ IPD Content</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100">
+<div class="max-w-6xl mx-auto p-6 space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl md:text-3xl font-bold">รายการ IPD Content (ล่าสุด)</h1>
+    <a href="{% url 'ipdcontent_create' %}"
+       class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">
+      + เพิ่มรายการ
+    </a>
+  </div>
+
+  <div class="bg-white rounded-2xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr class="text-left text-sm font-semibold text-gray-700">
+          <th class="px-4 py-3">#</th>
+          <th class="px-4 py-3">ปีงบ</th>
+          <th class="px-4 py-3">เดือน</th>
+          <th class="px-4 py-3">หน่วยงาน</th>
+          <th class="px-4 py-3">HN</th>
+          <th class="px-4 py-3">AN</th>
+          <th class="px-4 py-3">Sum</th>
+          <th class="px-4 py-3">Percent</th>
+          <th class="px-4 py-3">วันที่ Admit</th>
+          <th class="px-4 py-3">วันที่ Discharge</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 text-sm">
+        {% for it in items %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-2">{{ forloop.counter }}</td>
+          <td class="px-4 py-2">{{ it.fiscal_year }}</td>
+          <td class="px-4 py-2">{{ it.month }}</td>
+          <td class="px-4 py-2">{{ it.department|default:"-" }}</td>
+          <td class="px-4 py-2">{{ it.hn|default:"-" }}</td>
+          <td class="px-4 py-2">{{ it.an|default:"-" }}</td>
+          <td class="px-4 py-2">{{ it.sum_score }}</td>
+          <td class="px-4 py-2">
+            {{ it.percent }}%
+          </td>
+          <td class="px-4 py-2">
+            {{ it.date_admitted|date:"Y-m-d"|default:"-" }}
+          </td>
+          <td class="px-4 py-2">
+            {{ it.date_discharged|date:"Y-m-d"|default:"-" }}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="10" class="px-4 py-6 text-center text-gray-500">
+            ยังไม่มีข้อมูล
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>

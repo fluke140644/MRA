@@ -1,0 +1,64 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ดาวโหลดไฟล์และแบบฟอร์ม{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    
+    <!-- Navbar -->
+<nav class="bg-white shadow-md px-6 py-4 flex items-center justify-between relative">
+    <!-- Left: Logo + Hospital Name -->
+    <div class="flex items-center space-x-3">
+    <a href="/" class="flex items-center space-x-3">
+    <img src="{% static 'MRAapp/images/sdh.png' %}" alt="Logo" class="h-10 w-10 rounded-full">
+    <span class="text-lg font-semibold text-gray-800">โรงพยาบาลสมเด็จ</span>
+  </a>
+  
+</div>
+
+    <!-- Center: System Name -->
+    <div class="absolute left-1/2 transform -translate-x-1/2">
+        <span class="text-xl font-bold text-blue-800">Medical Record Audit (MRA)</span>
+    </div>
+    
+
+    <!-- Right: Login/Logout -->
+     {% if request.path == '/listformdata' or request.path == '/report' %}
+    
+    <div class="flex items-center space-x-4">
+        {% if user.is_authenticated %}
+            <span class="text-gray-600">สวัสดี {{ user.username }}</span>
+            <a href="{% url 'logout' %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+                Logout
+            </a>
+        {% else %}
+            <a href="{% url 'login' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+                Login
+            </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+</nav>
+
+    {% block content %}{% endblock %}
+
+    <footer class="bg-blue-500 text-white py-1 fixed bottom-0 left-0 w-full z-50">
+  <div class="text-center w-full">
+    <p class="text-md font-semibold">SOMDET HOSPITAL © 2025</p>
+    <p class="text-sm">BUILD BY IT SOMDET</p>
+  </div>
+</footer>
+    
+
+
+</body>
+
+</html>

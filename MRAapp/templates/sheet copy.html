@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="flex items-center justify-center mt-6">
+  <h2 class="text-2xl font-semibold" style="color: blue;">ดาวโหลดไฟล์เอกสารและแบบฟอร์มต่างๆ</h2>
+</div>
+
+<style>
+    body {
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin: 2rem auto 0 auto;
+
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    thead {
+      background-color: #f0f0f0;
+    }
+    .pagination {
+      margin-top: 1rem;
+      text-align: center;
+    }
+    .pagination button {
+      margin: 0 5px;
+      padding: 6px 12px;
+      border: none;
+      background: #eee;
+      cursor: pointer;
+    }
+    .pagination button.active {
+      background: #006de9;
+      color: white;
+      font-weight: bold;
+    }
+    input, select {
+      padding: 6px 10px;
+      font-size: 1rem;
+    }
+  </style>
+
+<div class="container ">
+  <div class="controls">
+    <div>
+      แสดง 
+      <select id="rowsPerPage">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="15">15</option>
+      </select>
+      รายการต่อหน้า
+    </div>
+    <div>
+      ค้นหา: <input type="text" id="searchInput" placeholder="ค้นหา...">
+    </div>
+  </div>
+
+  <table id="repairTable">
+    <thead>
+      <tr>
+        <th style="width: 80px;">ลำดับ</th>
+        <th style="width: 140px;">เลขที่เอกสาร</th>
+        <th style="width: 160px;">วัน/เดือน/ปี</th>
+        <th>หัวข้อเรื่อง</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <!-- เพิ่มข้อมูลจริงได้ตามต้องการ -->
+    </tbody>
+  </table>
+
+  <div class="pagination" id="pagination"></div>
+</div>
+
+<script>
+  const data = [
+    { num: '1', id: '-----', date: '02/07/2025', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '2', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '3', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '4', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '5', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '6', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '7', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+    { num: '8', id: 'RQ0002', date: '0/00/0000', head: 'test', link: '<a href="" style="color : blue; font-weight: bold;">เปิดไฟล์</a>' },
+
+  ];
+
+  const rowsPerPageEl = document.getElementById("rowsPerPage");
+  const searchInput = document.getElementById("searchInput");
+  const tableBody = document.getElementById("tableBody");
+  const pagination = document.getElementById("pagination");
+
+  let currentPage = 1;
+
+  function renderTable() {
+    const rowsPerPage = parseInt(rowsPerPageEl.value);
+    const keyword = searchInput.value.toLowerCase();
+    const filtered = data.filter(item =>
+      Object.values(item).some(val => val.toLowerCase().includes(keyword))
+    );
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+    const pageItems = filtered.slice(start, end);
+
+    tableBody.innerHTML = pageItems.map(item => `
+      <tr>
+        <td>${item.num}</td>
+        <td>${item.id}</td>
+        <td>${item.date}</td>
+        <td>${item.head}</td>
+        <td>${item.link}</td>
+      </tr>
+    `).join("");
+
+    renderPagination(filtered.length, rowsPerPage);
+  }
+
+  function renderPagination(totalItems, perPage) {
+    const totalPages = Math.ceil(totalItems / perPage);
+    let buttons = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      buttons += `<button class="${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    pagination.innerHTML = `
+      <button onclick="prevPage()">Previous</button>
+      ${buttons}
+      <button onclick="nextPage(${totalPages})">Next</button>
+    `;
+  }
+
+  function goToPage(page) {
+    currentPage = page;
+    renderTable();
+  }
+
+  function prevPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable();
+    }
+  }
+
+  function nextPage(max) {
+    if (currentPage < max) {
+      currentPage++;
+      renderTable();
+    }
+  }
+
+  rowsPerPageEl.addEventListener("change", () => {
+    currentPage = 1;
+    renderTable();
+  });
+  searchInput.addEventListener("input", () => {
+    currentPage = 1;
+    renderTable();
+  });
+
+  renderTable();
+</script>
+{% endblock %}

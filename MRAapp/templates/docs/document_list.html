@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block content %}
+<style>
+  body { background: #f5f5f5; }
+  .container {
+    background: white; padding: 1.5rem; border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 2rem auto 0 auto;
+    max-width: 1360px;
+  }
+  .controls { display: flex; justify-content: space-between; margin-bottom: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+  th, td { padding: 10px 12px; border: 1px solid #ddd; text-align: center; }
+  thead { background-color: #f0f0f0; }
+  .pagination { margin-top: 1rem; text-align: center; }
+  .pagination a, .pagination span {
+    display: inline-block; margin: 0 5px; padding: 6px 12px; background: #eee; border-radius: 6px;
+  }
+  .pagination .text-white { background: #006de9; }
+  input, select { padding: 6px 10px; font-size: 1rem; }
+</style>
+
+<div class="flex items-center justify-center mt-6">
+  <h2 class="text-2xl font-semibold" style="color: blue;">ดาวโหลดไฟล์เอกสารและแบบฟอร์มต่างๆ</h2>
+</div>
+
+<div class="container max-w-6xl">
+  <div class="controls">
+    <form method="get" class="flex w-full items-center justify-between gap-4">
+      <div>
+        แสดง
+        <select name="per_page" onchange="this.form.submit()">
+          <option value="5"  {% if per_page == 5 %}selected{% endif %}>5</option>
+          <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+          <option value="15" {% if per_page == 15 %}selected{% endif %}>15</option>
+        </select>
+        รายการต่อหน้า
+      </div>
+      <div>
+        ค้นหา:
+        <input type="text" name="q" value="{{ q }}" placeholder="ค้นหา..." />
+        <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded">ค้นหา</button>
+        {% if request.user.is_staff %}
+        <a href="{% url 'MRA:document_create' %}" class="ml-2 px-3 py-1 bg-green-600 text-white rounded">+ เพิ่มเอกสาร</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 80px;">ลำดับ</th>
+        <th style="width: 140px;">เลขที่เอกสาร</th>
+        <th style="width: 160px;">วัน/เดือน/ปี</th>
+        <th>หัวข้อเรื่อง</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for doc in page_obj.object_list %}
+      <tr>
+        <td>{{ forloop.counter0|add:page_obj.start_index }}</td>
+        <td>{{ doc.number }}</td>
+        <td>{{ doc.doc_date|date:"d/m/Y" }}</td>
+        <td class="text-left">{{ doc.title }}</td>
+        <td>
+          {% if doc.file %}
+  <a href="{{ doc.file.url }}" target="_blank" rel="noopener" class="font-bold" style="color:blue;">เปิดไฟล์</a>
+{% elif doc.external_url %}
+  <a href="{{ doc.external_url }}" target="_blank" rel="noopener" class="font-bold" style="color:blue;">เปิดลิงก์</a>
+{% else %}
+  -
+{% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5">ไม่พบข้อมูล</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="pagination">
+    {% if page_obj.has_previous %}
+      <a class="px-3 py-1 bg-gray-200 rounded" href="?q={{ q }}&per_page={{ per_page }}&page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+
+    {% for num in page_obj.paginator.page_range %}
+      {% if page_obj.number == num %}
+        <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ num }}</span>
+      {% elif num > page_obj.number|add:-3 and num < page_obj.number|add:3 %}
+        <a class="px-3 py-1 bg-gray-200 rounded" href="?q={{ q }}&per_page={{ per_page }}&page={{ num }}">{{ num }}</a>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a class="px-3 py-1 bg-gray-200 rounded" href="?q={{ q }}&per_page={{ per_page }}&page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

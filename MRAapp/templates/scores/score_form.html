@@ -1,0 +1,270 @@
+{% extends 'baseipd.html' %}
+{% load static %}
+
+<title>{% block title %}บันทึกคะแนน IPD Content{% endblock %}</title>
+{% block content %}
+
+
+  <style>
+    .grid-12 { display:grid; gap:.75rem; grid-template-columns: repeat(2,1fr); }
+    @media (min-width:992px){ .grid-12 { grid-template-columns: repeat(4,1fr); } }
+    .score-box { font-weight:700; }
+  </style>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0" style="font-size: 24px; font-weight: bold;"> แบบประเมินคุณภาพการบันทึกเวชระเบียนผู้ป่วยใน Medical Record Audit Form (IPD)</h3>
+    <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ดูรายการทั้งหมด</a>
+  </div>
+{% if messages %}
+  <div class="mb-3">
+    {% for m in messages %}
+      <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if form.non_field_errors %}
+  <div class="alert alert-danger">
+    {{ form.non_field_errors }}
+  </div>
+{% endif %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- <div class="card mb-3">
+      <div class="card-header">หัวข้อแบบประเมิน</div>
+      <div class="card-body">
+        {{ form.title }}
+      </div>
+    </div> -->
+
+    <div class="card mb-3">
+      <div class="card-header"
+      style="background-color: #458fff; color: white;">
+    ส่วนที่ 1: ข้อมูลผู้ป่วย/หน่วยบริการ</div>
+      <div class="card-body">
+        <div class="row g-3">
+          <!-- <div class="col-md-5">
+            <label class="form-label" style="font-weight: bold;" >หัวข้อ</label>{{ form.title }}
+            <div class="text-danger small">{{ form.title.errors }}</div>
+          </div> -->
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight: bold;">Hcode</label>{{ form.hcode }}
+            <div class="text-danger small">{{ form.hcode.errors }}</div>
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" style="font-weight: bold;">Hname</label>{{ form.hname }}
+            <div class="text-danger small">{{ form.hname.errors }}</div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" style="font-weight: bold;" required >HN</label>{{ form.hn }}
+            <div class="text-danger small">{{ form.hn.errors }}</div>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label" style="font-weight: bold;">AN</label>{{ form.an }}
+            <div class="text-danger small">{{ form.an.errors }}</div>
+          </div>
+          <!-- <div class="col-md-3"></div> -->
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight: bold;">Date admitted</label>{{ form.date_admitted }}
+            <div class="text-danger small">{{ form.date_admitted.errors }}</div>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label" style="font-weight: bold;">Date discharged</label>{{ form.date_discharged }}
+            <div class="text-danger small">{{ form.date_discharged.errors }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+  <div class="card-header d-flex justify-content-between align-items-center"
+  style="background-color: #458fff; color: white;">
+    <span>ส่วนที่ 2: คะแนนตัวชี้วัด (0 / 1 / NA)</span>
+    <span class="score-box" id="liveScore">คะแนน: 0/0 (0%)</span>
+  </div>
+
+  <div class="card-body">
+  {% for sec in sections %}
+    <div class="{% if not forloop.first %}border-top border-dark pt-3 mt-4{% endif %}">
+      <h4 class="d-flex justify-content-between align-items-center">
+        <span style="font-size: 18px; font-weight: bold;">{{ sec.index }}. {{ sec.title }}</span>
+        <small class="text-muted">
+          <span id="secScore-{{ sec.index }}">0/0 (0%)</span>
+        </small>
+      </h4>
+
+      <div class="grid-12">
+        {% for field in sec.rows %}
+          <div>
+            <label class="form-label">เกณฑ์ {{ forloop.counter }}</label>
+            {{ field }}
+            <div class="text-danger small">{{ field.errors }}</div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-2">
+        <label class="form-label">หมายเหตุ</label>
+        {{ sec.note }}
+        <div class="text-danger small">{{ sec.note.errors }}</div>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+
+    <!-- แถวสรุป/หมายเหตุเพิ่มเติมถ้าต้องการ -->
+    <!-- <div class="row mt-3 g-3">
+      <div class="col-md-2">
+        <label class="form-label">คะแนนเต็ม</label>
+        {{ form.max_score }}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">คะแนนที่ได้</label>
+        {{ form.final_score }}
+      </div>
+      <div class="col-md-8">
+        <label class="form-label">หมายเหตุ</label>
+        {{ form.note }}
+      </div>
+    </div>
+  </div>
+</div> -->
+
+
+    <div class="d-flex justify-content-center gap-2 mt-3 mb-3">
+  <button class="btn btn-primary btn-sm" type="submit">บันทึก</button>
+  <a class="btn btn-outline-secondary btn-sm" href="{% url 'MRA:score_list' %}">ยกเลิก</a>
+</div>
+  </form>
+</div>
+
+
+<script>
+function norm(v) {
+  if (v == null) return "";
+  return String(v).trim().toUpperCase();
+}
+
+function updateOverallScore() {
+  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
+  let counted = 0, yes = 0;
+
+  for (const sel of selects) {
+    const val = norm(sel.value);
+    // ✅ นับเฉพาะ 0 หรือ 1 เท่านั้น (ค่าว่าง "" และ "NA" = ไม่นับ)
+    if (val === '0' || val === '1') {
+      counted++;
+      if (val === '1') yes++;
+    }
+  }
+
+  const pct = counted ? (yes / counted * 100) : 0;
+  const el = document.getElementById('liveScore');
+  if (el) el.textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
+}
+
+function updateSectionScores() {
+  for (let i = 1; i <= 12; i++) {
+    const selects = Array.from(document.querySelectorAll(`select[name^="s${i}_"]`));
+    let counted = 0, yes = 0;
+
+    for (const sel of selects) {
+      const val = norm(sel.value);
+      if (val === '0' || val === '1') {
+        counted++;
+        if (val === '1') yes++;
+      }
+    }
+
+    const pct = counted ? (yes / counted * 100) : 0;
+    const span = document.getElementById(`secScore-${i}`);
+    if (span) span.textContent = `${yes}/${counted} (${pct.toFixed(0)}%)`;
+  }
+}
+
+function updateAllScores() {
+  updateOverallScore();
+  updateSectionScores();
+}
+
+// คำนวณครั้งแรก และคำนวณใหม่เมื่อเปลี่ยนค่า
+document.addEventListener('DOMContentLoaded', updateAllScores);
+document.addEventListener('change', (e) => {
+  if (e.target.matches('select[name^="s"]')) updateAllScores();
+});
+</script>
+
+
+<!-- <script>
+function updateLiveScore() {
+  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
+  let counted = 0, yes = 0;
+  selects.forEach(sel => {
+    const v = sel.value;
+    if (v !== 'NA') {
+      counted += 1;
+      if (v === '1') yes += 1;
+    }
+  });
+  const pct = counted > 0 ? (yes / counted * 100) : 0;
+  document.getElementById('liveScore').textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
+}
+document.addEventListener('change', (e) => {
+  if (e.target.matches('select[name^="s"]')) updateLiveScore();
+});
+document.addEventListener('DOMContentLoaded', updateLiveScore);
+</script>
+
+
+
+
+<script>
+function updateOverallScore() {
+  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
+  let counted = 0, yes = 0;
+  for (const sel of selects) {
+    const v = sel.value;
+    if (v !== 'NA') {
+      counted++;
+      if (v === '1') yes++;
+    }
+  }
+  const pct = counted ? (yes / counted * 100) : 0;
+  const el = document.getElementById('liveScore');
+  if (el) el.textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
+}
+
+function updateSectionScores() {
+  // วน 12 หัวข้อ
+  for (let i = 1; i <= 12; i++) {
+    const selects = Array.from(document.querySelectorAll(`select[name^="s${i}_"]`));
+    let counted = 0, yes = 0;
+    for (const sel of selects) {
+      const v = sel.value;
+      if (v !== 'NA') {
+        counted++;
+        if (v === '1') yes++;
+      }
+    }
+    const pct = counted ? (yes / counted * 100) : 0;
+    const span = document.getElementById(`secScore-${i}`);
+    if (span) span.textContent = `${yes}/${counted} (${pct.toFixed(0)}%)`;
+  }
+}
+
+function updateAllScores() {
+  updateOverallScore();
+  updateSectionScores();
+}
+
+document.addEventListener('change', (e) => {
+  if (e.target.matches('select[name^="s"]')) updateAllScores();
+});
+document.addEventListener('DOMContentLoaded', updateAllScores);
+</script> -->
+</body>
+</html>
+{% endblock %}

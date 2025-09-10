@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+<title>{% block title %}บันทึกผลคะแนน OPD และ IPD{% endblock %}</title>
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 ">
+  <!-- คอลัมน์ซ้าย -->
+  <div class="bg-white p-6 rounded-xl shadow-xl space-y-6 border">
+  <h2 class="text-3xl font-bold text-center h-12">บันทึกผลคะแนน</h2>
+  <span>&nbsp;&nbsp;</span>
+
+  <!-- รายการ IPD -->
+  <div class="space-y-2">
+    <span class="text-2xl font-bold block text-left">รายการ IPD</span>
+    <div class="pl-4 space-y-1">
+      <!-- <a href="#" class="text-blue-600 font-bold text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- บันทึกผลคะแนน IPD Content</a><br> -->
+      <a href="/scores" class="text-blue-600 font-bold ">- รายการ IPD </a><br>
+      <a href="/scores/new/" class="text-blue-600 font-bold ">  - บันทึกผลคะแนน IPD </a><br>
+    <!-- <a class="dropdown-item" href="{% url 'MRA:score_summary' %}">สรุปร้อยละรายเกณฑ์</a> -->
+</div>
+  
+
+  </div>
+
+  <!-- รายการ OPD -->
+  <div class="space-y-2">
+    <span class="text-2xl font-bold block text-left">รายการ OPD</span>
+    <div class="pl-4 space-y-1">
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- บันทึกผลคะแนน OPD Content</a><br>
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- บันทึกผลคะแนน OPD เกณฑ์</a>
+    </div>
+  </div>
+</div>
+
+  <!-- คอลัมน์ขวา -->
+<div class="bg-white p-6 rounded-xl shadow-xl space-y-3 border">
+  <h2 class="text-3xl font-bold text-center h-12">รายงาน </h2>
+  <div class="text-center font-bold p-0 m-0 leading-none">
+  <span class="font-bold inline-block leading-none bg-yellow-300">Internal Audit (ประเมินโดยสาขาวิชา)</span>
+</div>
+  
+  
+  <div class="space-y-2">
+    <span class="text-2xl font-bold block text-left">รายการ IPD</span>
+    <div class="pl-4 space-y-1">
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- รายงาน IPD Content</a><br>
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- รายงาน IPD เกณฑ์</a>
+    </div>
+  </div>
+
+  <!-- รายการ OPD -->
+  <div class="space-y-2">
+    <span class="text-2xl font-bold block text-left">รายการ OPD</span>
+    <div class="pl-4 space-y-1">
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- รายงาน OPD Content</a><br>
+      <a href="#" class="text-gray-400 font-bold font-bold cursor-not-allowed pointer-events-none">- รายงาน OPD เกณฑ์</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

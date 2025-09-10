@@ -1,0 +1,69 @@
+{% extends 'baseipd.html' %}
+{% load static %}
+
+<title>{% block title %}บันทึกคะแนน IPD Content{% endblock %}</title>
+{% block content %}
+
+
+</head>
+<body class="bg-light">
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+  <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">รายการแบบประเมิน</h3>
+  
+  <!-- กลุ่มปุ่ม -->
+  <div class="ms-auto d-flex gap-2">
+    <a href="{% url 'MRA:score_create' %}" class="btn btn-primary">สร้างแบบประเมิน</a>
+    <a href="{% url 'MRA:score_summary' %}" class="btn btn-primary">ภาพรวมแต่ละเกณฑ์</a>
+    <a href="{% url 'MRA:score_coverage' %}" class="btn btn-outline-primary">สรุปจำนวนที่ตรวจ</a>
+  </div>
+</div>
+
+  <form method="get" class="d-flex gap-2 mt-3 mb-2">
+  <input type="text" name="q" value="{{ q }}" class="form-control"
+       placeholder="พิมพ์ HN/AN หรือวันที่: 09/09/2025-10/09/2025">
+
+  <input type="number" name="limit" value="{{ limit|default_if_none:'' }}" 
+         class="form-control" style="max-width:100px;" placeholder="Limit">
+
+  <button type="submit" class="btn btn-outline-primary">ค้นหา</button>
+  <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ล้าง</a>
+</form>
+
+  <div class="card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>วันที่</th>
+            <th>Hcode</th>
+            <th>HN</th>
+            <th>AN</th>
+            <th class="text-end">คะแนน</th>
+            <th class="text-end">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in items %}
+          <tr>
+            <td>{{ item.created_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ item.hcode }}</td>
+            <td>{{ item.hn }}</td>
+            <td>{{ item.an }}</td>
+            <td class="text-end">{{ item.total_yes }}/{{ item.total_counted }} ({{ item.percent|floatformat:1 }}%)</td>
+            <td class="text-end"><a href="{% url 'MRA:score_detail' item.id %}" class="btn btn-sm btn-primary">ดูรายละเอียด</a></td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="p-2 text-end text-muted">
+  รวมทั้งหมด {{ items|length }} รายการ
+</div>
+</div>
+</body>
+</html>
+{% endblock %}

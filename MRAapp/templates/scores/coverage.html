@@ -1,0 +1,76 @@
+{% extends "baseipd.html" %}
+{% load static %}
+{% block content %}
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-end mb-3">
+   <h3 class="m-0" style="font-size: 24px; font-weight: bold;">สรุปจำนวนที่ตรวจ &amp; ร้อยละความสมบูรณ์</h3>
+    <div class="ms-auto d-flex gap-2">
+      <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
+    </div>
+  </div>
+
+  <!-- ฟอร์มเลือกช่วงวันที่ -->
+  <form method="get" class="card p-3 mb-3">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <label class="form-label">Date admitted (เริ่ม)</label>
+        <input type="date" name="admit_start" class="form-control" value="{{ admit_start }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Date admitted (สิ้นสุด)</label>
+        <input type="date" name="admit_end" class="form-control" value="{{ admit_end }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Date discharged (เริ่ม)</label>
+        <input type="date" name="disch_start" class="form-control" value="{{ disch_start }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Date discharged (สิ้นสุด)</label>
+        <input type="date" name="disch_end" class="form-control" value="{{ disch_end }}">
+      </div>
+    </div>
+    <div class="mt-3 d-flex gap-2">
+      <button class="btn btn-primary" type="submit">คำนวณ</button>
+      <a class="btn btn-outline-secondary" href="{% url 'MRA:score_coverage' %}">ล้างค่า</a>
+    </div>
+  </form>
+
+  <!-- ส่วนหัวแบบรายงาน -->
+  <div class="mb-3">
+    <div>จำนวนเวชระเบียนทั้งหมดในช่วง: <strong>{{ total_records }}</strong> แฟ้ม</div>
+    <div>จำนวนเวชระเบียนที่ตรวจ (มากที่สุดในบรรดาหัวข้อ): <strong>{{ examined_total }}</strong> แฟ้ม</div>
+    <div>ความสมบูรณ์รวมทั้งหมด: <strong>{{ overall_pct|floatformat:2 }}</strong> %</div>
+  </div>
+
+  <!-- ตารางหลัก -->
+  <div class="table-responsive">
+    <table class="table table-bordered align-middle">
+      <thead class="table-secondary text-center align-middle">
+        <tr>
+          <th style="width:60px;">ลำดับ</th>
+          <th>Content of medical record</th>
+          <th style="width:180px;">จำนวนเวชระเบียนที่ตรวจ</th>
+          <th style="width:180px;">ร้อยละความสมบูรณ์</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rows %}
+        <tr>
+          <td class="text-center">{{ r.index }}</td>
+          <td>{{ r.title }}</td>
+          <td class="text-center">{{ r.checked_records }}</td>
+          <td class="text-center">{{ r.percent|floatformat:2 }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="fw-bold">
+          <td colspan="2" class="text-center">Overall</td>
+          <td class="text-center">{{ examined_total }}</td>
+          <td class="text-center">{{ overall_pct|floatformat:2 }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
