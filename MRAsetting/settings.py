@@ -16,10 +16,15 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STATICFILES_DIRS = [
-    BASE_DIR / "MRAapp" / "images",
-]
+STATIC_ROOT = BASE_DIR / 'staticfiles'     # ที่รวบรวมไฟล์ไว้เสิร์ฟจริง
+STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+
+
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles'
+# STATICFILES_DIRS = [
+#     BASE_DIR / "MRAapp" / "images",
+# ]
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
