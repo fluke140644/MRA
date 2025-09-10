@@ -88,7 +88,7 @@ DATABASES = {
         'NAME': 'mra',
         'USER': 'root',
         'PASSWORD': 'Sd@11087',
-        'HOST': 'localhost',
+        'HOST': '172.30.109.224',
         'PORT': '3306',
         'OPTIONS': {
             'charset': 'utf8mb4',
