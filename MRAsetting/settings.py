@@ -87,7 +87,7 @@ DATABASES = {
         "ENGINE": "django.db.backends.mysql",
         "NAME": "mra",
         "USER": "mrauser",
-        "PASSWORD": "Sd@11087",
+        "PASSWORD": "StrongPass123!",
         "HOST": "127.0.0.1",      # สำคัญ: บังคับ TCP
         "PORT": "3306",
         "CONN_MAX_AGE": 60,
