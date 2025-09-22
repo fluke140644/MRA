@@ -34,11 +34,11 @@
 }
 
 .ball:nth-child(odd) {
-    color: #22dfbf;
+    color: #b6fff3;
 }
 
 .ball:nth-child(even) {
-    color: #fffc46;
+    color: #fffeba;
 }
 
 /* Using a custom attribute for variability */
@@ -125,7 +125,8 @@
     <div class="d-flex gap-2" style="z-index: 2;">
       <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
       <a href="{% url 'MRA:score_create' %}" class="btn btn-primary">สร้างใหม่</a>
-      <button class="btn btn-outline-primary" onclick="window.print()">พิมพ์</button>
+      <button class="btn btn-outline-primary" onclick="printPortrait()">พิมพ์</button>
+      <!-- <button class="btn btn-outline-secondary" onclick="printLandscape()">พิมพ์ (แนวนอน)</button> -->
     </div>
   </div>
 
@@ -246,5 +247,19 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
   }
 });
+</script>
+
+<script>
+function printPortrait() {
+  document.documentElement.classList.remove('print-landscape');
+  window.print();
+}
+
+function printLandscape() {
+  document.documentElement.classList.add('print-landscape');
+  window.print();
+  
+  setTimeout(() => document.documentElement.classList.remove('print-landscape'), 1000);
+}
 </script>
 {% endblock %}

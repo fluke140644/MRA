@@ -15,9 +15,15 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'     # ที่รวบรวมไฟล์ไว้เสิร์ฟจริง
-STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+STATIC_ROOT = '/var/www/MRA/static'
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/var/www/MRA/media'
+# STATIC_URL = '/static/'
+# STATIC_ROOT = BASE_DIR / 'staticfiles'     # ที่รวบรวมไฟล์ไว้เสิร์ฟจริง
+# STATICFILES_DIRS = [ BASE_DIR / 'static' ]
 
 
 # STATIC_URL = '/static/'
@@ -26,8 +32,8 @@ STATICFILES_DIRS = [ BASE_DIR / 'static' ]
 #     BASE_DIR / "MRAapp" / "images",
 # ]
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+# MEDIA_URL = "/media/"
+# MEDIA_ROOT = BASE_DIR / "media"
 
 
 # Quick-start development settings - unsuitable for production
@@ -39,8 +45,15 @@ SECRET_KEY = 'django-insecure-bb^2k)z^ai8wzjd^r#q3&hy*=w161nl3^*14m_@4)c($_^k7sq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["172.30.109.224", "localhost"]
+ALLOWED_HOSTS = ["172.30.109.224","127.0.0.1","localhost","mraaudit.sdh.go.th"]
+CSRF_TRUSTED_ORIGINS = ["http://172.30.109.224","http://mraaudit.sdh.go.th"]
 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "Lax"
+CSRF_COOKIE_SAMESITE = "Lax"
 
 # Application definition
 
@@ -93,7 +106,7 @@ DATABASES = {
         "NAME": "mra",
         "USER": "mrauser",
         "PASSWORD": "StrongPass123!",
-        "HOST": "127.0.0.1",      # สำคัญ: บังคับ TCP
+        "HOST": "127.0.0.1",
         "PORT": "3306",
         "CONN_MAX_AGE": 60,
         "OPTIONS": {
