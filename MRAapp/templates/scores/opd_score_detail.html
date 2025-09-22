@@ -1,0 +1,180 @@
+{% extends "baseipd.html" %}
+{% load mra_extras %}
+<title>{% block title %}รายละเอียกคะแนน OPD{% endblock %}</title>
+{% block content %}
+
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">รายละเอียดคะแนน OPD #{{ obj.id }}</h3>
+    <div class="d-flex gap-2">
+  <a href="{% url 'MRA:opd_score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
+
+  {% if request.user.is_authenticated %}
+    {% if request.user.is_superuser or request.user.is_staff or obj.created_by_id == request.user.id %}
+      <a href="{% url 'MRA:opd_score_update' obj.id %}" class="btn btn-warning">แก้ไข</a>
+    {% endif %}
+  {% endif %}
+
+  <a href="{% url 'MRA:opd_score_create' %}" class="btn btn-primary">บันทึกใหม่</a>
+</div>
+  </div>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-2"><strong>Hcode:</strong> {{ obj.hcode }}</div>
+        <div class="col-md-4"><strong>Hname:</strong> {{ obj.hname }}</div>
+        <div class="col-md-2"><strong>HN:</strong> {{ obj.hn }}</div>
+        <div class="col-md-2"><strong>PID:</strong> {{ obj.pid }}</div>
+        <div class="col-md-2"><strong>ประเภท:</strong>
+          {% if obj.is_general %}General{% endif %}{% if obj.is_general and obj.is_chronic %} / {% endif %}{% if obj.is_chronic %}Chronic{% endif %}
+        </div>
+        <div class="col-md-6"><strong>Diagnosis:</strong> {{ obj.diagnosis }}</div>
+        <div class="col-md-2"><strong>ช่วงตรวจ:</strong> {{ obj.audit_period|format_audit_period|default:"-" }}</div>
+        <div class="col-md-2"><strong>1st Visit:</strong> {{ obj.first_visit_date|thai_date:'en'|default:"-" }}</div>
+        <!-- <div class="col-md-2"><strong>1st Visit:</strong> {{ obj.first_visit_date|thai_date:'th'|default:"-" }}</div> -->
+        <div class="col-md-2"><strong>Visit จาก:</strong> {{ obj.visit_date_start|thai_date:'en'|default:"-" }}</div>
+        <div class="col-md-2"><strong>ถึง:</strong> {{ obj.visit_date_end|thai_date:'en'|default:"-" }}</div>
+
+        <div class="col-md-12"><strong>หมายเหตุ:</strong> {{ obj.note }}</div>
+      </div>
+    </div>
+  </div>
+
+<div class="card mb-3">
+  <div class="card-body">
+    <h3 class="m-0" style="font-size: 18px; font-weight: bold; z-index: 1;">สรุปผลรวม</h3>
+    <div>คะแนนรวม: <strong>{{ overall_display.score }}</strong></div>
+    <div>คะแนนเต็ม: <strong>{{ overall_display.possible }}</strong></div>
+    <div>คิดเป็น: <strong>{{ overall_display.percent }}%</strong></div>
+  </div>
+</div>
+
+  {% if sections %}
+    {% for s in sections %}
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #389750; color: white;">
+        <span>
+          <strong>ส่วนที่ {{ s.index }}:</strong> {{ s.title }}
+          {% if s.index == 5 and s.items_by_visit %}
+            <!-- — ใช้ผลจาก <u>ครั้งที่ {{ s.active_visit|default:1 }}</u> -->
+            <!-- <span class="ms-2">
+              <span class="badge bg-light text-dark">ครั้งที่ 1</span>
+              <span class="badge bg-light text-dark">ครั้งที่ 2</span>
+              <span class="badge bg-light text-dark">ครั้งที่ 3</span>
+            </span> -->
+          {% endif %}
+        </span>
+        {% with sc=s.display_score|default:s.score ps=s.display_possible|default:s.possible %}
+<span>
+  คะแนน: <strong>{{ sc }}/{{ ps }}</strong>
+  {% if s.locked %}<span class="badge ms-2" style="background-color: #ff0000;">LOCKED</span>{% endif %}
+</span>
+{% endwith %}
+      </div>
+
+      <div class="card-body">
+        <div class="mb-2 small text-muted">เพิ่มคะแนน(+): {{ s.add }} | หักคะแนน(–): {{ s.deduct }}</div>
+
+        {% if s.index == 5 and s.items_by_visit %}
+          
+          {% if s.per_visit_list %}
+            <div class="mb-2">
+              {% for pv in s.per_visit_list %}
+                <span class="badge bg-info text-dark me-2">
+                  ครั้งที่ {{ pv.visit }}: {{ pv.score }}/{{ pv.possible }} ({{ pv.percent }}%)
+                </span>
+              {% endfor %}
+            </div>
+          {% endif %}
+
+          
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:90px;">ครั้งที่</th>
+                  <th style="width:60px;">ข้อ</th>
+                  <th>เกณฑ์</th>
+                  <th style="width:100px;">ค่า</th>
+                  
+                </tr>
+              </thead>
+              <tbody>
+                {# เรียง 1 -> 2 -> 3 เพื่อความชัดเจน #}
+                {% for k, items in s.items_by_visit.items %}
+                  {% if k|stringformat:"s" == "1" %}
+                    {% for it in items %}
+                      <tr>
+                        <td>ครั้งที่ 1</td>
+                        <td>{{ it.index }}</td>
+                        <td>{{ it.text }}</td>
+                        <td>{{ it.value|upper }}</td>
+        
+                      </tr>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+
+                {% for k, items in s.items_by_visit.items %}
+                  {% if k|stringformat:"s" == "2" %}
+                    {% for it in items %}
+                      <tr>
+                        <td>ครั้งที่ 2</td>
+                        <td>{{ it.index }}</td>
+                        <td>{{ it.text }}</td>
+                        <td>{{ it.value|upper }}</td>
+                        
+                      </tr>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+
+                {% for k, items in s.items_by_visit.items %}
+                  {% if k|stringformat:"s" == "3" %}
+                    {% for it in items %}
+                      <tr>
+                        <td>ครั้งที่ 3</td>
+                        <td>{{ it.index }}</td>
+                        <td>{{ it.text }}</td>
+                        <td>{{ it.value|upper }}</td>
+                        
+                      </tr>
+                    {% endfor %}
+                  {% endif %}
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+        {% else %}
+          
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th style="width:60px;">ข้อ</th>
+                  <th>เกณฑ์</th>
+                  <th style="width:100px;">ค่า</th>
+                  
+                </tr>
+              </thead>
+              <tbody>
+                {% for it in s.items %}
+                <tr>
+                  <td>{{ it.index }}</td>
+                  <td>{{ it.text }}</td>
+                  <td>{{ it.value|upper }}</td>
+                  
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}

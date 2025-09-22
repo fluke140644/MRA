@@ -47,56 +47,100 @@
     </table>
   </div>
 
-  <h3 class="mt-4 mb-3" style="font-size: 24px; font-weight: bold; z-index: 1;">แสดงผลเป็นกราฟแท่ง</h3>
+  <h3 class="mt-4 mb-3" style="font-size: 24px; font-weight: bold;">แสดงผลเป็นกราฟแท่ง</h3>
 <div class="card p-3 shadow-sm">
-  <canvas id="summaryChart" height="640"></canvas>
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อเกณฑ์ (รวมทุกหัวข้อ)</h6>
+      <div style="height:320px"><canvas id="ipdAvgByCriterionChart"></canvas></div>
+    </div>
+    <div class="col-lg-6">
+      <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อหัวข้อ</h6>
+      <div style="height:320px"><canvas id="ipdAvgBySectionChart"></canvas></div>
+    </div>
+  </div>
+
+  <hr class="my-4">
+
+  <div class="row g-3 align-items-center">
+    <div class="col-auto">
+      <label class="col-form-label">ดูรายละเอียดเกณฑ์ตามหัวข้อ</label>
+    </div>
+    <div class="col-auto">
+      <select id="ipdSectionSelect" class="form-select form-select-sm">
+        {% for row in rows %}
+          <option value="{{ forloop.counter0 }}">{{ row.index }}. {{ row.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+  <div class="mt-3" style="height:340px">
+    <canvas id="ipdSectionDetailChart"></canvas>
+  </div>
 </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const labels = [{% for row in rows %}"{{ row.index }}. {{ row.title }}",{% endfor %}];
+(() => {
+  // ----- เตรียมข้อมูลจาก context -----
+  // ป้ายเกณฑ์ 1..9
+  const itemLabels = [{% for k in "123456789" %}"เกณฑ์ {{ forloop.counter }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
 
-  // เฉลี่ยรายแถว (ใช้ค่า row.avg)
-  const dataAvg = [{% for row in rows %}{{ row.avg|floatformat:2 }},{% endfor %}];
+  // รวมทุกหัวข้อต่อเกณฑ์ (มาจาก total_cols)
+  const totalPercents = [{% for c in total_cols %}{{ c.percent|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
 
-  const ctx = document.getElementById('summaryChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [{
-        label: 'ร้อยละเฉลี่ย (%)',
-        data: dataAvg,
-        backgroundColor: 'rgba(54, 162, 235, 0.7)',
-        borderColor: 'rgba(54, 162, 235, 1)',
-        borderWidth: 1
-      }]
+  // ป้ายหัวข้อ + ค่าเฉลี่ยต่อหัวข้อ (row.avg)
+  const sectionLabels = [{% for r in rows %}"{{ r.index }}. {{ r.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const sectionAvgs   = [{% for r in rows %}{{ r.avg|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+  // เมทริกซ์เปอร์เซ็นต์: แถว = หัวข้อ, คอลัมน์ = เกณฑ์ 1..9
+  const sectionsMatrix = [
+    {% for r in rows %}
+      [{% for c in r.cols %}{{ c.percent|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}]
+      {% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  ];
+
+  const commonOpts = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true, suggestedMax: 100, ticks: { callback: v => v + '%' } }
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true },
-        tooltip: { enabled: true }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          max: 100,
-          title: { display: true, text: 'เปอร์เซ็นต์ (%)' }
-        },
-        x: {
-          ticks: { autoSkip: false, maxRotation: 45, minRotation: 30 }
-        }
-      }
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => (ctx.parsed.y ?? ctx.parsed) + '%' } }
     }
+  };
+
+  // 1) ค่าเฉลี่ยต่อเกณฑ์ (รวมทุกหัวข้อ)
+  new Chart(document.getElementById('ipdAvgByCriterionChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: itemLabels, datasets: [{ data: totalPercents }] },
+    options: commonOpts
   });
+
+  // 2) ค่าเฉลี่ยต่อหัวข้อ
+  new Chart(document.getElementById('ipdAvgBySectionChart').getContext('2d'), {
+    type: 'bar',
+    data: { labels: sectionLabels, datasets: [{ data: sectionAvgs }] },
+    options: commonOpts
+  });
+
+  // 3) เลือกหัวข้อ → ดูค่าเฉลี่ยเกณฑ์ 1–9 ของหัวข้อนั้น
+  const detailCtx = document.getElementById('ipdSectionDetailChart').getContext('2d');
+  const selectEl  = document.getElementById('ipdSectionSelect');
+  const detailChart = new Chart(detailCtx, {
+    type: 'bar',
+    data: { labels: itemLabels, datasets: [{ data: sectionsMatrix[0] || [] }] },
+    options: commonOpts
+  });
+  selectEl.addEventListener('change', () => {
+    const idx = parseInt(selectEl.value, 10) || 0;
+    detailChart.data.datasets[0].data = sectionsMatrix[idx] || [];
+    detailChart.update();
+  });
+})();
 </script>
-
-
-  <!-- <p class="text-muted mt-2">
-    หมายเหตุ: คำนวณ % = จำนวน “1” / (จำนวนช่องที่ไม่นับ “NA”) × 100
-  </p> -->
-  
-</div>
 {% endblock %}

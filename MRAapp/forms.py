@@ -1,6 +1,7 @@
 from django import forms
 from .models import Document
 from .models import PatientScore, SCORE_CHOICES
+from .models import OPDScore
 
 class DocumentForm(forms.ModelForm):
     class Meta:
@@ -64,3 +65,36 @@ class PatientScoreForm(forms.ModelForm):
                 attrs={"class":"form-control form-control-sm","placeholder":"หมายเหตุหัวข้อ (ถ้ามี)"}
             )
 
+# ******************************************************* OPD บันทึกคะแนน *************************************************************************
+
+
+class OPDScoreForm(forms.ModelForm):
+    class Meta:
+        model = OPDScore
+        fields = [
+            "hcode", "hname", "hn", "pid",
+            "is_general", "is_chronic",
+            "diagnosis",
+            "audit_period",
+            "visit_date_start", "visit_date_end", "first_visit_date",
+            "note",
+        ]
+        widgets = {
+            "hcode": forms.TextInput(attrs={"class": "form-control"}),
+            "hname": forms.TextInput(attrs={"class": "form-control"}),
+            "hn": forms.TextInput(attrs={"class": "form-control"}),
+            "pid": forms.TextInput(attrs={"class": "form-control"}),
+
+            "is_general": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "is_chronic": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+
+            "diagnosis": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+            # month/year
+            "audit_period": forms.TextInput(attrs={"type": "month", "class": "form-control"}),
+
+            "visit_date_start": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "visit_date_end": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "first_visit_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+        }

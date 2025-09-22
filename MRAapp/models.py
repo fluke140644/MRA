@@ -225,3 +225,49 @@ def _counted_values(values):
     #     # ให้ final_score = คะแนนที่ได้จริง (จำนวน 1 ที่นับ)
     #     self.final_score = self.total_yes
     #     super().save(*args, **kwargs)
+
+
+# ******************************************************** OPD บันทึกคะแนน **********************************************************************************
+
+from django.db import models
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+class OPDScore(models.Model):
+    # Header fields
+    hcode = models.CharField("Hcode", max_length=20, blank=True, null=True)
+    hname = models.CharField("Hname", max_length=255, blank=True, null=True)
+    hn = models.CharField("HN", max_length=20, blank=True, null=True)
+    pid = models.CharField("PID", max_length=20, blank=True, null=True)
+
+    is_general = models.BooleanField("General", default=False)
+    is_chronic = models.BooleanField("Chronic", default=False)
+
+    diagnosis = models.TextField("Diagnosis", blank=True, null=True)
+
+    # YYYY-MM (เก็บเป็นสตริงเพื่อรองรับ type="month")
+    audit_period = models.CharField("ช่วงเวลาที่ตรวจสอบ (เดือน/ปี YYYY-MM)", max_length=7, blank=True, null=True)
+
+    visit_date_start = models.DateField("Visit Date (เริ่ม)", blank=True, null=True)
+    visit_date_end   = models.DateField("Visit Date (ถึง)", blank=True, null=True)
+    first_visit_date = models.DateField("1st Visit Date", blank=True, null=True)
+
+    # โครงสร้างคะแนน 8×7 + add/deduct + lock
+    data = models.JSONField(default=dict, blank=True)
+
+    total_score = models.IntegerField(default=0)
+    total_possible = models.IntegerField(default=0)
+    percent = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+
+    note = models.TextField("หมายเหตุ", blank=True, null=True)
+
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"OPD Score #{self.id} - {self.hn or ''}"
+

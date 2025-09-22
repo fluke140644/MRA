@@ -12,18 +12,118 @@
     
     {% block head %}{% endblock %}
 </head>
+<!-- (ไม่บังคับ) โหลดฟอนต์ไทยเวลา print -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap">
+
+<style>
+/* ปุ่ม/บล็อกที่ให้แสดงเฉพาะหน้าจอ */
+.no-print { display: inline-block; }
+.print-only { display: none; }
+
+/* utility */
+.page-break { page-break-before: always; }
+
+/* สไตล์สำหรับการพิมพ์ */
+@media print {
+  @page { size: A4 portrait; margin: 12mm; }    /* เปลี่ยนเป็น landscape ได้ด้านล่างด้วย JS */
+  html, body { height: auto; }
+  body {
+    font-family: "Sarabun", "TH Sarabun New", Tahoma, sans-serif;
+    font-size: 11pt;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* ซ่อนสิ่งที่ไม่อยากพิมพ์ */
+  .no-print, .btn, .navbar, .nav, .sidebar, .footer, .alert { display: none !important; }
+
+  /* ขยายคอนเทนเนอร์ให้เต็มกระดาษ */
+  .container, .container-fluid { width: auto !important; max-width: none !important; padding: 0 !important; }
+
+  /* การ์ดให้ขอบบาง ไม่มีเงา และไม่แตกหน้า */
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #999 !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 8mm;
+  }
+  .card-header {
+    background: #f2f2f2 !important;
+    border-bottom: 1px solid #999 !important;
+  }
+
+  /* ตารางอ่านง่าย และหัวตารางซ้ำทุกหน้า */
+  .table { font-size: 10pt; }
+  .table thead { display: table-header-group; }
+  .table tfoot { display: table-footer-group; }
+  .table tr { page-break-inside: avoid; }
+
+  /* แสดงบล็อกเฉพาะตอนพิมพ์ */
+  .print-only { display: block !important; }
+}
+</style>
 
 <body>
     
     <!-- Navbar -->
 <nav class="bg-white shadow-md px-6 py-4 flex items-center justify-between relative" style="z-index: 10;">
     <!-- Left: Logo + Hospital Name -->
-    <div class="flex items-center space-x-3">
-    <a href="/" class="flex items-center space-x-3">
+    <div class="flex items-center gap-3 sm:gap-4 lg:gap-6">
+  <a href="/" class="flex items-center gap-2 sm:gap-3">
     <img src="{% static 'MRAapp/images/sdh.png' %}" alt="Logo" class="h-10 w-10 rounded-full">
     <span class="text-lg font-semibold text-gray-800">โรงพยาบาลสมเด็จ</span>
   </a>
-  
+
+  <!-- <a href="{% url 'MRA:opd_score_list' %}" class="text-gray-700 hover:text-blue-600">
+    OPD
+  </a> -->
+  <div class="dropdown">
+  <button class="btn dropdown-toggle font-semibold text-gray-800"
+          style="font-size:16px"
+          type="button" id="dropdownMenuButton"
+          data-bs-toggle="dropdown" aria-expanded="false">
+    รายการ OPD IPD
+  </button>
+
+  {% with name=request.resolver_match.url_name %}
+  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+    <li>
+      <a class="dropdown-item {% if name == 'score_list' %}active{% endif %}"
+         {% if name == 'score_list' %}aria-current="page"{% endif %}
+         href="{% url 'MRA:score_list' %}">
+        รายการ IPD
+      </a>
+    </li>
+
+    <li>
+      <a class="dropdown-item {% if name == 'score_create' %}active{% endif %}"
+         {% if name == 'score_create' %}aria-current="page"{% endif %}
+         href="{% url 'MRA:score_create' %}">
+        บันทึกผลคะแนน IPD
+      </a>
+    </li>
+
+    <li><hr class="dropdown-divider"></li>
+
+    <li>
+      <a class="dropdown-item {% if name == 'opd_score_list' %}active{% endif %}"
+         {% if name == 'opd_score_list' %}aria-current="page"{% endif %}
+         href="{% url 'MRA:opd_score_list' %}">
+        รายการ OPD
+      </a>
+    </li>
+
+    <li>
+      <a class="dropdown-item {% if name == 'opd_score_create' %}active{% endif %}"
+         {% if name == 'opd_score_create' %}aria-current="page"{% endif %}
+         href="{% url 'MRA:opd_score_create' %}">
+        บันทึกผลคะแนน OPD
+      </a>
+    </li>
+  </ul>
+  {% endwith %}
+</div>
 </div>
 
     <!-- Center: System Name -->

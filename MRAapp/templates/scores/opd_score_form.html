@@ -1,0 +1,328 @@
+{% extends "baseipd.html" %}
+{% load static %}
+<title>{% block title %}บันทึกคะแนน OPD Content{% endblock %}</title>
+{% block content %}
+
+<style>
+  .card-soft { border: 1px solid rgba(0,0,0,.06); border-radius:.75rem; }
+  .score-badge { min-width: 2rem; display:inline-block; text-align:center; }
+  .criterion { display:flex; align-items:center; justify-content:space-between; padding:.5rem .75rem; border-radius:.5rem; background:#f8f9fa; }
+  .criterion + .criterion { margin-top:.5rem; }
+  .sticky-top-lite { position: sticky; top: .75rem; z-index: 10; }
+  .muted { color:#6c757d; }
+  .w-80 { width: 80px; }
+  .form-switch .form-check-input { cursor:pointer; }
+  .sec-dim { opacity:.6; }
+</style>
+
+<div class="container py-3" 
+     style="box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin: 1rem auto 0 auto;">
+
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">บันทึกคะแนน OPD Content</h3>
+    <div class="d-flex gap-2">
+      <a href="{% url 'MRA:opd_score_list' %}" class="btn btn-outline-primary">รายการ OPD</a>
+    </div>
+  </div>
+
+  <form method="post" oninput="recalc()">
+    {% csrf_token %}
+
+    <!-- Header form -->
+    <div class="card card-soft mb-3" style="box-shadow: 0 2px 10px rgba(0,0,0,0.3); margin: 2rem auto 0 auto;">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-2">
+            <label class="form-label">Hcode</label>
+            {{ form.hcode }}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Hname</label>
+            {{ form.hname }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">HN</label>
+            {{ form.hn }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">PID</label>
+            {{ form.pid }}
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label d-block">ประเภท</label>
+            <div class="form-check form-check-inline">
+              {{ form.is_general }} <label class="form-check-label ms-1">General</label>
+            </div>
+            <div class="form-check form-check-inline">
+              {{ form.is_chronic }} <label class="form-check-label ms-1">Chronic</label>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label">Diagnosis</label>
+            {{ form.diagnosis }}
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">ช่วงเวลาที่ตรวจสอบ (เดือน/ปี)</label>
+            {{ form.audit_period }}
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">1st Visit date</label>
+            {{ form.first_visit_date }}
+          </div>
+
+          <div class="col-md-2">
+            <label class="form-label">Visit จากวันที่</label>
+            {{ form.visit_date_start }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">ถึงวันที่</label>
+            {{ form.visit_date_end }}
+          </div>
+
+          <div class="col-12">
+            <label class="form-label">หมายเหตุ</label>
+            {{ form.note }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sections -->
+    {% for sec in sections %}
+    <div class="card card-soft mb-3" id="secCard-{{ sec.index }}" style="box-shadow: 0 2px 10px rgba(0,0,0,0.2); margin: 2rem auto 0 auto;">
+      <div class="card-header d-flex flex-wrap gap-2 justify-content-between align-items-center" style="background-color: #389750; color: white;">
+        <div><strong>ส่วนที่ {{ sec.index }}:</strong> {{ sec.title }}</div>
+        <div class="d-flex align-items-center gap-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="lock-{{ sec.index }}" name="s{{ sec.index }}_lock" onchange="toggleSectionLock({{ sec.index }})">
+            <label class="form-check-label" for="lock-{{ sec.index }}">ล็อคหัวข้อนี้ (ไม่นับคะแนน)</label>
+          </div>
+          <span class="badge bg-light text-dark" id="secScore-{{ sec.index }}">คะแนน: 0/0 (0%)</span>
+        </div>
+      </div>
+      <div class="card-body">
+  {% if sec.index == 5 %}
+    <!-- ★★ หัวข้อ 5: Follow Up เลือกครั้งที่ 1/2/3 แล้วสลับฟอร์ม ★★ -->
+
+    <!-- Radio เลือกครั้งที่ -->
+    <div class="mb-3">
+      {% for v,label in visit_labels.items %}
+        <label class="me-3">
+          <input type="radio" class="form-check-input me-1"
+                 name="s5_visit" value="{{ v }}" {% if v == 1 %}checked{% endif %}
+                 onchange="switchFollowUpVisit({{ v }}); recalc();">
+          {{ label }}
+        </label>
+      {% endfor %}
+    </div>
+
+    <!-- เพิ่ม/หักคะแนน (เฉพาะหัวข้อ 5 ใช้ชื่อสอดคล้องกับ views: s5_add/s5_ded) -->
+    <div class="d-flex gap-3 mb-3 align-items-end">
+      <div>
+        <label class="form-label">เพิ่มคะแนน (+)</label>
+        <input type="number" class="form-control w-80" name="s5_add" value="0">
+      </div>
+      <div>
+        <label class="form-label">หักคะแนน (–)</label>
+        <input type="number" class="form-control w-80" name="s5_ded" value="0">
+      </div>
+      <!-- <div class="muted">* คิดรวมเฉพาะ “ครั้งที่เลือก”</div> -->
+    </div>
+
+    <!-- แผงเกณฑ์ของแต่ละครั้ง: แสดงเฉพาะแผงที่เลือก ที่เหลือซ่อน (d-none) -->
+    {% for v,label in visit_labels.items %}
+      <div class="fu-panel fu-panel-{{ v }} {% if v != 1 %}d-none{% endif %}">
+        {% for _ in "x"|ljust:n_items %}
+        {% with idx=forloop.counter %}
+        <div class="criterion">
+          <div>
+            <span class="badge me-2 score-badge" style="background-color: rgb(0, 133, 29);">{{ idx }}</span>
+            เกณฑ์ {{ idx }} <span class="muted ms-2">(1 = 1 , 0 = 0 , NA = ไม่นับ)</span>
+          </div>
+          <div class="d-flex gap-3">
+            <label class="form-check-label">
+              <input class="form-check-input" type="radio" name="s5_v{{ v }}_i{{ idx }}" value="1"> 1
+            </label>
+            <label class="form-check-label">
+              <input class="form-check-input" type="radio" name="s5_v{{ v }}_i{{ idx }}" value="0"> 0
+            </label>
+            <label class="form-check-label">
+              <input class="form-check-input" type="radio" name="s5_v{{ v }}_i{{ idx }}" value="na"> NA
+            </label>
+          </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <!-- หัวข้ออื่น ๆ (เหมือนเดิมของคุณ) -->
+    <div class="d-flex gap-3 mb-3 align-items-end">
+      <div>
+        <label class="form-label">เพิ่มคะแนน (+)</label>
+        <input type="number" class="form-control w-80" name="s{{ sec.index }}_add" value="0">
+      </div>
+      <div>
+        <label class="form-label">หักคะแนน (–)</label>
+        <input type="number" class="form-control w-80" name="s{{ sec.index }}_ded" value="0">
+      </div>
+    </div>
+
+    {% for it in sec.items %}
+    <div class="criterion">
+      <div>
+        <span class="badge me-2 score-badge" style="background-color: rgb(0, 133, 29);">{{ it.index }}</span>
+        {{ it.text }} <span class="muted ms-2">(1 = 1 , 0 = 0 , NA = ไม่นับ)</span>
+      </div>
+      <div class="d-flex gap-3">
+        <label class="form-check-label">
+          <input class="form-check-input" type="radio" name="s{{ sec.index }}_i{{ it.index }}" value="1"> 1
+        </label>
+        <label class="form-check-label">
+          <input class="form-check-input" type="radio" name="s{{ sec.index }}_i{{ it.index }}" value="0"> 0
+        </label>
+        <label class="form-check-label">
+          <input class="form-check-input" type="radio" name="s{{ sec.index }}_i{{ it.index }}" value="na"> NA
+        </label>
+      </div>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
+
+    </div>
+    {% endfor %}
+
+    <div class="row g-3">
+      <div class="col-lg-3">
+        <div class="card card-soft sticky-top-lite">
+          <div class="card-body">
+            <h5 class="mb-3">สรุปผลรวม</h5>
+            <div>คะแนนรวม: <strong id="overallScore">0</strong></div>
+            <div>คะแนนเต็ม: <strong id="overallPossible">0</strong></div>
+            <div>คิดเป็น: <strong id="overallPercent">0%</strong></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-9">
+        <div class="text-end">
+          <button class="btn btn-primary" type="submit">บันทึก</button>
+          <a class="btn btn-outline-secondary" href="{% url 'MRA:opd_score_list' %}">ยกเลิก</a>
+        </div>
+      </div>
+    </div>
+
+  </form>
+</div>
+
+<script>
+const N_ITEMS = {{ n_items|default:7 }};
+const N_VISITS_SECTION5 = 3;
+
+function switchFollowUpVisit(v) {
+  document.querySelectorAll('.fu-panel').forEach(p => p.classList.add('d-none'));
+  document.querySelector(`.fu-panel-${v}`)?.classList.remove('d-none');
+}
+
+function getChecked(name) {
+  const x = document.querySelector(`input[name="${name}"]:checked`);
+  return x ? x.value : 'na';
+}
+
+function toggleSectionLock(si) {
+  const card = document.getElementById(`secCard-${si}`);
+  const body = card.querySelector('.card-body');
+  const locked = document.getElementById(`lock-${si}`).checked;
+
+  if (si === 5) {
+    // disable add/ded + เกณฑ์ทุกครั้ง
+    body.querySelectorAll(`input[name="s5_add"], input[name="s5_ded"]`).forEach(el => {
+      if (locked) el.value = 0;
+      el.disabled = locked;
+    });
+    for (let v=1; v<=N_VISITS_SECTION5; v++) {
+      for (let j=1; j<=N_ITEMS; j++) {
+        body.querySelectorAll(`input[name="s5_v${v}_i${j}"]`).forEach(el => el.disabled = locked);
+      }
+    }
+  } else {
+    body.querySelectorAll(`input[name^="s${si}_i"], input[name="s${si}_add"], input[name="s${si}_ded"]`)
+      .forEach(el => {
+        if (locked && (el.name.endsWith('_add') || el.name.endsWith('_ded'))) el.value = 0;
+        el.disabled = locked;
+      });
+  }
+
+  body.classList.toggle('sec-dim', locked); // ทำให้หม่นเฉพาะเนื้อหาการ์ด
+  recalc();
+}
+
+function recalc() {
+  let totalScore = 0, totalPossible = 0;
+
+  for (let si=1; si<=8; si++) {
+    const locked = document.getElementById(`lock-${si}`)?.checked || false;
+    let secScore = 0, secPossible = 0;
+
+    if (si === 5) {
+      if (locked) {
+        // ❗ ล็อค = ไม่นับคะแนน
+        secScore = 0;
+        secPossible = 0;
+      } else {
+        // รวมทุกครั้ง (1..3)
+        for (let v=1; v<=N_VISITS_SECTION5; v++) {
+          for (let j=1; j<=N_ITEMS; j++) {
+            const val = getChecked(`s5_v${v}_i${j}`);
+            if (val === '1') { secScore += 1; secPossible += 1; }
+            else if (val === '0') { secPossible += 1; }
+          }
+        }
+        const add = parseInt(document.querySelector('input[name="s5_add"]')?.value || '0', 10);
+        const ded = parseInt(document.querySelector('input[name="s5_ded"]')?.value || '0', 10);
+        secScore = secScore + add - ded;
+      }
+    } else {
+      if (locked) {
+        // ❗ ล็อค = ไม่นับคะแนน
+        secScore = 0;
+        secPossible = 0;
+      } else {
+        for (let j=1; j<=N_ITEMS; j++) {
+          const v = getChecked(`s${si}_i${j}`);
+          if (v === '1') { secScore += 1; secPossible += 1; }
+          else if (v === '0') { secPossible += 1; }
+        }
+        const add = parseInt(document.querySelector(`input[name="s${si}_add"]`)?.value || '0', 10);
+        const ded = parseInt(document.querySelector(`input[name="s${si}_ded"]`)?.value || '0', 10);
+        secScore = secScore + add - ded;
+      }
+    }
+
+    totalScore += secScore;
+    totalPossible += secPossible;
+
+    const pct = secPossible ? (secScore / secPossible) * 100 : 0;
+    const box = document.getElementById(`secScore-${si}`);
+    if (box) box.textContent = `คะแนน: ${secScore}/${secPossible} (${pct.toFixed(2)}%)`;
+  }
+
+  const overallPct = totalPossible ? (totalScore / totalPossible) * 100 : 0;
+  document.getElementById('overallScore').textContent = totalScore;
+  document.getElementById('overallPossible').textContent = totalPossible;
+  document.getElementById('overallPercent').textContent = `${overallPct.toFixed(2)}%`;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  switchFollowUpVisit(1);
+  recalc();
+});
+</script>
+
+
+{% endblock %}

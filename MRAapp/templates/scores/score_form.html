@@ -141,64 +141,7 @@
   </form>
 </div>
 
-
 <script>
-function norm(v) {
-  if (v == null) return "";
-  return String(v).trim().toUpperCase();
-}
-
-function updateOverallScore() {
-  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
-  let counted = 0, yes = 0;
-
-  for (const sel of selects) {
-    const val = norm(sel.value);
-    // ✅ นับเฉพาะ 0 หรือ 1 เท่านั้น (ค่าว่าง "" และ "NA" = ไม่นับ)
-    if (val === '0' || val === '1') {
-      counted++;
-      if (val === '1') yes++;
-    }
-  }
-
-  const pct = counted ? (yes / counted * 100) : 0;
-  const el = document.getElementById('liveScore');
-  if (el) el.textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
-}
-
-function updateSectionScores() {
-  for (let i = 1; i <= 12; i++) {
-    const selects = Array.from(document.querySelectorAll(`select[name^="s${i}_"]`));
-    let counted = 0, yes = 0;
-
-    for (const sel of selects) {
-      const val = norm(sel.value);
-      if (val === '0' || val === '1') {
-        counted++;
-        if (val === '1') yes++;
-      }
-    }
-
-    const pct = counted ? (yes / counted * 100) : 0;
-    const span = document.getElementById(`secScore-${i}`);
-    if (span) span.textContent = `${yes}/${counted} (${pct.toFixed(0)}%)`;
-  }
-}
-
-function updateAllScores() {
-  updateOverallScore();
-  updateSectionScores();
-}
-
-// คำนวณครั้งแรก และคำนวณใหม่เมื่อเปลี่ยนค่า
-document.addEventListener('DOMContentLoaded', updateAllScores);
-document.addEventListener('change', (e) => {
-  if (e.target.matches('select[name^="s"]')) updateAllScores();
-});
-</script>
-
-
-<!-- <script>
 function updateLiveScore() {
   const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
   let counted = 0, yes = 0;
@@ -264,7 +207,7 @@ document.addEventListener('change', (e) => {
   if (e.target.matches('select[name^="s"]')) updateAllScores();
 });
 document.addEventListener('DOMContentLoaded', updateAllScores);
-</script> -->
+</script>
 </body>
 </html>
 {% endblock %}
