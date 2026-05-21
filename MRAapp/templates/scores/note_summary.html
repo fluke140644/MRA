@@ -1,0 +1,146 @@
+{% extends "baseipd.html" %}
+{% load static %}
+{% block title %}สรุปข้อเสนอแนะ / หมายเหตุ {% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold text-primary m-0">
+            <i class="fas fa-comments text-warning"></i> สรุปข้อเสนอแนะ / หมายเหตุ
+        </h3>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex gap-2 w-100 md:w-50">
+                <input type="text" name="q" class="form-control" placeholder="เช่น 01/03/2026 - 31/03/2026" value="{{ q }}">
+                <button type="submit" class="btn btn-primary px-4">ค้นหา</button>
+                <a href="?" class="btn btn-outline-secondary">ล้าง</a>
+            </form>
+        </div>
+    </div>
+
+    <ul class="nav nav-pills mb-3" id="pills-tab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active fw-bold px-4" id="pills-ipd-tab" data-bs-toggle="pill" data-bs-target="#pills-ipd" type="button" role="tab">IPD Notes</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link fw-bold px-4" id="pills-opd-tab" data-bs-toggle="pill" data-bs-target="#pills-opd" type="button" role="tab">OPD Notes</button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="pills-tabContent">
+        
+        <div class="tab-pane fade show active" id="pills-ipd" role="tabpanel">
+            <div class="accordion shadow-sm" id="accordionIPD">
+                {% for sec in ipd_data %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="ipd-heading{{ sec.index }}">
+                        <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#ipd-collapse{{ sec.index }}">
+                            ส่วนที่ {{ sec.index }}: {{ sec.title }}
+                            {% if sec.count > 0 %}
+                                <span class="badge bg-danger rounded-pill ms-2">{{ sec.count }} รายการ</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill ms-2">ไม่มีข้อมูล</span>
+                            {% endif %}
+                        </button>
+                    </h2>
+                    <div id="ipd-collapse{{ sec.index }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" data-bs-parent="#accordionIPD">
+                        <div class="accordion-body p-0">
+                            {% if sec.count > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped m-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 15%;">วันที่บันทึก</th>
+                                            <th style="width: 10%;">HN</th>
+                                            <th style="width: 10%;">AN</th>
+                                            <th style="width: 55%;">หมายเหตุ / ข้อเสนอแนะ</th>
+                                            <th style="width: 10%;" class="text-center">ตรวจสอบ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for note in sec.notes %}
+                                        <tr>
+                                            <td class="text-muted small">{{ note.date|date:"d/m/Y H:i" }}</td>
+                                            <td class="fw-bold text-primary">{{ note.hn|default:"-" }}</td>
+                                            <td>{{ note.an|default:"-" }}</td>
+                                            <td style="white-space: pre-wrap; font-size: 0.95rem;">{{ note.text }}</td>
+                                            <td class="text-center">
+                                                <a href="{% url 'MRA:score_detail' note.pk %}" target="_blank" class="btn btn-sm btn-outline-info">เปิดฟอร์ม</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle fs-3 text-success mb-2"></i><br>
+                                ไม่มีหมายเหตุ หรือ ข้อเสนอแนะในหัวข้อนี้
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="pills-opd" role="tabpanel">
+            <div class="accordion shadow-sm" id="accordionOPD">
+                {% for sec in opd_data %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="opd-heading{{ sec.index }}">
+                        <button class="accordion-button collapsed fw-bold text-dark" type="button" data-bs-toggle="collapse" data-bs-target="#opd-collapse{{ sec.index }}">
+                            ส่วนที่ {{ sec.index }}: {{ sec.title }}
+                            {% if sec.count > 0 %}
+                                <span class="badge bg-warning text-dark rounded-pill ms-2">{{ sec.count }} รายการ</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill ms-2">ไม่มีข้อมูล</span>
+                            {% endif %}
+                        </button>
+                    </h2>
+                    <div id="opd-collapse{{ sec.index }}" class="accordion-collapse collapse" data-bs-parent="#accordionOPD">
+                        <div class="accordion-body p-0">
+                            {% if sec.count > 0 %}
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped m-0 align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th style="width: 15%;">วันที่บันทึก</th>
+                                            <th style="width: 15%;">HN</th>
+                                            <th style="width: 60%;">ข้อเสนอแนะ / ปัญหาที่พบ</th>
+                                            <th style="width: 10%;" class="text-center">ตรวจสอบ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for note in sec.notes %}
+                                        <tr>
+                                            <td class="text-muted small">{{ note.date|date:"d/m/Y H:i" }}</td>
+                                            <td class="fw-bold text-primary">{{ note.hn|default:"-" }}</td>
+                                            <td style="white-space: pre-wrap; font-size: 0.95rem;">{{ note.text }}</td>
+                                            <td class="text-center">
+                                                <a href="{% url 'MRA:opd_score_detail' note.pk %}" target="_blank" class="btn btn-sm btn-outline-info">เปิดฟอร์ม</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle fs-3 text-success mb-2"></i><br>
+                                ไม่มีปัญหาที่พบในหัวข้อนี้
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

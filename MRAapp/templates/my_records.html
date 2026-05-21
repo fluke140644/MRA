@@ -1,0 +1,59 @@
+{% extends "baseipd.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>รายการของฉัน</h2>
+    <hr>
+
+    <h4>รายการ IPD</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>HN</th>
+                <th>AN</th>
+                <th>วันที่บันทึก</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in my_ipd %}
+            <tr>
+                <td>{{ item.hn }}</td>
+                <td>{{ item.an }}</td>
+                <td>{{ item.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'MRA:score_edit' item.pk %}" class="btn btn-sm btn-warning">แก้ไข</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">ยังไม่มีรายการ IPD</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h4 class="mt-5">รายการ OPD</h4>
+    <table class="table table-hover">
+        <thead>
+            <tr>
+                <th>HN</th>
+                <th>ชื่อหน่วยงาน</th>
+                <th>วันที่บันทึก</th>
+                <th>จัดการ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in my_opd %}
+            <tr>
+                <td>{{ item.hn }}</td>
+                <td>{{ item.hname }}</td>
+                <td>{{ item.created_at|date:"d/m/Y H:i" }}</td>
+                <td>
+                    <a href="{% url 'MRA:opd_score_edit' item.pk %}" class="btn btn-sm btn-warning">แก้ไข</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">ยังไม่มีรายการ OPD</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

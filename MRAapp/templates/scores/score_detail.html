@@ -121,11 +121,18 @@
 
   <!-- Header -->
   <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">{{ obj.title }}</h3>
+    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;"></h3>
     <div class="d-flex gap-2" style="z-index: 2;">
       <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
       <a href="{% url 'MRA:score_create' %}" class="btn btn-primary">สร้างใหม่</a>
-      <button class="btn btn-outline-primary" onclick="printPortrait()">พิมพ์</button>
+      {% if user.is_superuser or user.is_staff or obj.created_by == user %}
+        <a href="{% url 'MRA:score_edit' obj.pk %}" class="btn btn-warning">
+        <i class="fas fa-edit"></i> แก้ไขข้อมูล</a>
+        <a href="{% url 'MRA:score_delete' obj.pk %}" class="btn btn-danger" onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้');">
+          <i class="fas fa-trash"></i> ลบข้อมูล
+        </a>
+        {% endif %}
+      <!-- <button class="btn btn-outline-primary disabled" onclick="printPortrait()">พิมพ์</button> -->
       <!-- <button class="btn btn-outline-secondary" onclick="printLandscape()">พิมพ์ (แนวนอน)</button> -->
     </div>
   </div>
@@ -144,6 +151,17 @@
             <span class="me-3"><strong>คะแนนที่ได้ :</strong> {{ obj.final_score }}</span>
             <span class="me-3"><strong>คะแนนเต็ม :</strong> {{ obj.total_counted }}</span>
             <span><strong>บันทึกเมื่อ:</strong> {{ obj.created_at|date:"d/m/Y H:i" }}</span>
+            <span class="ms-2"><strong>โดย:</strong> 
+                {% if obj.created_by %}
+                    {% if obj.created_by.first_name %}
+                        {{ obj.created_by.first_name }} {{ obj.created_by.last_name }}
+                    {% else %}
+                        {{ obj.created_by.username }}
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </span>
           </div>
 
           <!-- Progress bar สวย ๆ -->
@@ -157,6 +175,45 @@
                  aria-valuenow="{{ obj.percent|floatformat:0 }}" aria-valuemin="0" aria-valuemax="100">{{ obj.final_score }} / {{ obj.total_counted }}
             </div>
           </div>
+          <div class="mt-4 pt-3 border-top">
+            {% if obj.finding_sorting_issue or obj.finding_no_id_issue %}
+              <div class="alert alert-warning border-0 bg-opacity-10 bg-warning text-dark mb-3">
+                <h6 class="alert-heading fw-bold"><i class="bi bi-exclamation-triangle-fill"></i> Overall finding</h6>
+                <ul class="mb-0 ps-3">
+                  {% if obj.finding_sorting_issue %}
+                    <li>การจัดเรียงเวชระเบียนไม่เป็นไปตามมาตรฐานที่กำหนด</li>
+                  {% endif %}
+                  {% if obj.finding_no_id_issue %}
+                    <li>เอกสารบางแผ่น ไม่มีชื่อผู้รับบริการ HN AN ทำให้ไม่สามารถระบุได้</li>
+                  {% endif %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <div class="p-3 rounded bg-light border">
+              <div class="d-flex align-items-start">
+                <div class="me-2 mt-1">
+                  {% if obj.overall_finding == 'no_issue' %}
+                    <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                  {% elif obj.overall_finding == 'inadequate' %}
+                    <i class="bi bi-x-circle-fill text-danger fs-4"></i>
+                  {% else %}
+                    <i class="bi bi-info-circle-fill text-primary fs-4"></i>
+                  {% endif %}
+                </div>
+                <div>
+                  <span class="fs-5 fw-semibold">{{ obj.get_overall_finding_display|default:"-" }}</span>
+                  
+                  {% if obj.certain_issue_note %}
+                    <div class="mt-2 p-2 bg-white border rounded text-secondary">
+                      <strong>รายละเอียดระบุ:</strong> {{ obj.certain_issue_note }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          
         </div>
 
         <!-- Patient mini card (collapse trigger) -->
@@ -196,43 +253,77 @@
       <div class="card-body">
         <div class="row">
           <!-- คอลัมน์ซ้าย: เกณฑ์ 1–5 -->
-          <div class="col-lg-6">
-            {% for field in sec.rows|slice:":5" %}
-              <div class="criterion">
-                <span>เกณฑ์ {{ forloop.counter }}</span>
-                {% if field.value == '1' %}
-                  <span class="badge bg-success score-badge">1</span>
-                {% elif field.value == '0' %}
-                  <span class="badge bg-danger score-badge">0</span>
-                {% else %}
-                  <span class="badge bg-secondary score-badge">NA</span>
-                {% endif %}
-              </div>
-            {% endfor %}
-          </div>
+<div class="col-lg-6">
+  {% for row in sec.rows|slice:":5" %}
+    <div class="criterion">
+      <span>{{ row.label|safe }}</span> {% if row.val == '1' %}
+        <span class="badge bg-success score-badge">1</span>
+      {% elif row.val == '0' %}
+        <span class="badge bg-danger score-badge">0</span>
+      {% else %}
+        <span class="badge bg-secondary score-badge">NA</span>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
 
-          <!-- คอลัมน์ขวา: เกณฑ์ 6–9 -->
-          <div class="col-lg-6 mt-2 mt-lg-0">
-            {% for field in sec.rows|slice:"5:" %}
-              <div class="criterion">
-                <span>เกณฑ์ {{ forloop.counter|add:5 }}</span>
-                {% if field.value == '1' %}
-                  <span class="badge bg-success score-badge">1</span>
-                {% elif field.value == '0' %}
-                  <span class="badge bg-danger score-badge">0</span>
-                {% else %}
-                  <span class="badge bg-secondary score-badge">NA</span>
+<div class="col-lg-6 mt-2 mt-lg-0">
+  {% for row in sec.rows|slice:"5:" %}
+    <div class="criterion">
+      <span>{{ row.label|safe }}</span> {% if row.val == '1' %}
+        <span class="badge bg-success score-badge">1</span>
+      {% elif row.val == '0' %}
+        <span class="badge bg-danger score-badge">0</span>
+      {% else %}
+        <span class="badge bg-secondary score-badge">NA</span>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+</div> {% if sec.stat.bonus != 0 %}
+      <div class="mt-3 p-2 rounded d-flex align-items-center" 
+           style="background-color: {% if sec.stat.bonus > 0 %}#d1e7dd{% else %}#f8d7da{% endif %}; 
+                  border: 1px solid {% if sec.stat.bonus > 0 %}#badbcc{% else %}#f5c2c7{% endif %};">
+        
+        <span class="me-2" style="font-size: 1.2rem;">
+          {% if sec.stat.bonus > 0 %}
+            <i class="bi bi-star-fill text-success"></i> {% else %}
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+          {% endif %}
+        </span>
+
+        <div>
+          <strong>
+            {% if sec.stat.bonus > 0 %}
+              <span class="text-success">เพิ่มคะแนน</span>
+            {% else %}
+              <span class="text-danger">ถูกหักคะแนน</span>
+            {% endif %}
+          </strong>
+          
+          <span class="badge {% if sec.stat.bonus > 0 %}bg-success{% else %}bg-danger{% endif %} ms-2" 
+                style="font-size: 1rem;">
+            {% if sec.stat.bonus > 0 %}+{{ sec.stat.bonus }}{% else %}{{ sec.stat.bonus }}{% endif %}
+          </span>
+
+          <div class="small text-muted mt-1">
+            {% if sec.stat.bonus < 0 %}
+                {% if sec.index == 1 %}
+                    (หัก 1 คะแนน กรณีมีหลายลายมือหรือแก้ไขแล้วไม่ลงลายมือชื่อกำกับ)
+                {% elif sec.index == 12 %}
+                    (หัก 1 คะแนนถ้าบันทึกไม่ต่อเนื่องทุกวัน ทุกเวร หรือบันทึก วัน เวลาใน MAR ไม่สอดคล้องคำสั่งการรักษา)
                 {% endif %}
-              </div>
-            {% endfor %}
+            {% endif %}
           </div>
         </div>
+      </div>
+      {% endif %}
 
         {# หมายเหตุของหัวข้อนี้ #}
         {% with n=sec.note.value %}
           {% if n %}
             <div class="mt-3 text-muted " style="font-size: 18px;">
-              <strong>หมายเหตุหัวข้อ:</strong> {{ n }}
+              <strong>ข้อเสนอแนะ:</strong> {{ n }}
             </div>
           {% endif %}
         {% endwith %}

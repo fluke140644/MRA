@@ -1,213 +1,416 @@
 {% extends 'baseipd.html' %}
 {% load static %}
 
-<title>{% block title %}บันทึกคะแนน IPD Content{% endblock %}</title>
+{% block title %}บันทึกคะแนน IPD{% endblock %}
+
 {% block content %}
+<style>
+  /* Base Grid สำหรับคำถาม */
+  .grid-questions {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: 1fr; /* มือถือเป็นแถวเดียว */
+  }
+
+  @media (min-width: 992px) {
+    .grid-questions {
+      grid-template-columns: repeat(2, 1fr); /* คอมเป็นสองแถว */
+    }
+  }
+
+  /* Sticky Score สำหรับมือถือ */
+  .sticky-score {
+    position: sticky;
+    top: 60px; /* ปรับตามความสูง Navbar */
+    z-index: 40;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* ปรับแต่ง Input ให้เหมาะกับนิ้วสัมผัส */
+  select.form-select, input.form-control {
+    min-height: 40px;
+  }
+
+  .section-title {
+    font-size: 1.1rem;
+    line-height: 1.4;
+  }
 
 
-  <style>
-    .grid-12 { display:grid; gap:.75rem; grid-template-columns: repeat(2,1fr); }
-    @media (min-width:992px){ .grid-12 { grid-template-columns: repeat(4,1fr); } }
-    .score-box { font-weight:700; }
-  </style>
-<body class="bg-light">
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0" style="font-size: 24px; font-weight: bold;"> แบบประเมินคุณภาพการบันทึกเวชระเบียนผู้ป่วยใน Medical Record Audit Form (IPD)</h3>
-    <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ดูรายการทั้งหมด</a>
+  .criteria-text {
+      white-space: pre-line;
+      line-height: 1.7;
+      color: #374151;
+      font-size: 0.9rem;
+      display: block;
+  }
+  
+
+  .criteria-text strong {
+      color: #1a56db;
+      margin-right: 4px;
+      font-weight: bold;
+  }
+</style>
+
+<div class="container py-3 md:py-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-3">
+    <h3 class="m-0 font-bold text-lg md:text-2xl text-gray-800">แบบประเมินคุณภาพการบันทึกเวชระเบียน (IPD)</h3>
+    <a href="{% url 'MRA:score_list' %}" class="btn btn-sm btn-outline-secondary">ดูรายการทั้งหมด</a>
   </div>
-{% if messages %}
-  <div class="mb-3">
+
+  {% if messages %}
     {% for m in messages %}
-      <div class="alert alert-{{ m.tags }}">{{ m }}</div>
+      <div class="alert alert-{{ m.tags }} alert-dismissible fade show" role="alert">
+        {{ m }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
     {% endfor %}
-  </div>
-{% endif %}
+  {% endif %}
 
-{% if form.non_field_errors %}
-  <div class="alert alert-danger">
-    {{ form.non_field_errors }}
-  </div>
-{% endif %}
   <form method="post" novalidate>
     {% csrf_token %}
 
-    <!-- <div class="card mb-3">
-      <div class="card-header">หัวข้อแบบประเมิน</div>
-      <div class="card-body">
-        {{ form.title }}
+    <div class="card mb-4 border-0 shadow-sm">
+      <div class="card-header bg-primary text-white font-bold py-3">
+        ส่วนที่ 1: ข้อมูลผู้ป่วย/หน่วยบริการ
       </div>
-    </div> -->
-
-    <div class="card mb-3">
-      <div class="card-header"
-      style="background-color: #458fff; color: white;">
-    ส่วนที่ 1: ข้อมูลผู้ป่วย/หน่วยบริการ</div>
       <div class="card-body">
         <div class="row g-3">
-          <!-- <div class="col-md-5">
-            <label class="form-label" style="font-weight: bold;" >หัวข้อ</label>{{ form.title }}
-            <div class="text-danger small">{{ form.title.errors }}</div>
-          </div> -->
-          <div class="col-md-3">
-            <label class="form-label" style="font-weight: bold;">Hcode</label>{{ form.hcode }}
-            <div class="text-danger small">{{ form.hcode.errors }}</div>
+          <div class="col-6 col-md-3">
+            <label class="form-label font-bold small">Hcode</label>
+            {{ form.hcode }}
           </div>
-          <div class="col-md-5">
-            <label class="form-label" style="font-weight: bold;">Hname</label>{{ form.hname }}
-            <div class="text-danger small">{{ form.hname.errors }}</div>
+          <div class="col-6 col-md-2">
+            <label class="form-label font-bold small">HN</label>
+            {{ form.hn }}
           </div>
-          <div class="col-md-2">
-            <label class="form-label" style="font-weight: bold;" required >HN</label>{{ form.hn }}
-            <div class="text-danger small">{{ form.hn.errors }}</div>
+          <div class="col-12 col-md-5">
+            <label class="form-label font-bold small">Hname</label>
+            {{ form.hname }}
           </div>
-          <div class="col-md-2">
-            <label class="form-label" style="font-weight: bold;">AN</label>{{ form.an }}
-            <div class="text-danger small">{{ form.an.errors }}</div>
+          <div class="col-12 col-md-2">
+            <label class="form-label font-bold small">AN</label>
+            {{ form.an }}
           </div>
-          <!-- <div class="col-md-3"></div> -->
-          <div class="col-md-3">
-            <label class="form-label" style="font-weight: bold;">Date admitted</label>{{ form.date_admitted }}
-            <div class="text-danger small">{{ form.date_admitted.errors }}</div>
+          <div class="col-6 col-md-3">
+            <label class="form-label font-bold small">Date Admitted</label>
+            {{ form.date_admitted }}
           </div>
-          <div class="col-md-3">
-            <label class="form-label" style="font-weight: bold;">Date discharged</label>{{ form.date_discharged }}
-            <div class="text-danger small">{{ form.date_discharged.errors }}</div>
+          <div class="col-6 col-md-3">
+            <label class="form-label font-bold small">Date Discharged</label>
+            {{ form.date_discharged }}
+          </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="row g-3">
+          <div class="col-12 col-md-6">
+            <div class="p-3 bg-light rounded shadow-sm h-100">
+              <p class="font-bold border-bottom pb-2 mb-2 text-blue-700">Overall Finding</p>
+              <div class="form-check mb-2">{{ form.finding_sorting_issue }} <label class="form-check-label">{{ form.finding_sorting_issue.label }}</label></div>
+              <div class="form-check">{{ form.finding_no_id_issue }} <label class="form-check-label">{{ form.finding_no_id_issue.label }}</label></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="p-3 bg-light rounded shadow-sm h-100">
+              <p class="font-bold border-bottom pb-2 mb-2 text-blue-700">สรุปผล (เลือก 1 ข้อ)</p>
+              {% for radio in form.overall_finding %}
+                <div class="form-check mb-2">
+                  {{ radio.tag }}
+                  <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                  {% if forloop.last %}
+                    <div class="mt-2" id="certain-issue-box">{{ form.certain_issue_note }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="card mb-3">
-  <div class="card-header d-flex justify-content-between align-items-center"
-  style="background-color: #458fff; color: white;">
-    <span>ส่วนที่ 2: คะแนนตัวชี้วัด (0 / 1 / NA)</span>
-    <span class="score-box" id="liveScore">คะแนน: 0/0 (0%)</span>
-  </div>
+    <div class="card mb-4 border-0 shadow-sm">
+      <div class="card-header sticky-score d-flex justify-content-between align-items-center bg-primary text-white py-3">
+        <span class="font-bold d-none d-md-inline">ส่วนที่ 2: คะแนนตัวชี้วัด</span>
+        <span class="font-bold d-md-none text-sm">ส่วนที่ 2: คะแนน</span>
+        <span class="bg-white text-primary px-3 py-1 rounded-pill font-bold" id="liveScore" style="font-size: 0.9rem;">0/0 (0%)</span>
+      </div>
 
-  <div class="card-body">
-  {% for sec in sections %}
-    <div class="{% if not forloop.first %}border-top border-dark pt-3 mt-4{% endif %}">
-      <h4 class="d-flex justify-content-between align-items-center">
-        <span style="font-size: 18px; font-weight: bold;">{{ sec.index }}. {{ sec.title }}</span>
-        <small class="text-muted">
-          <span id="secScore-{{ sec.index }}">0/0 (0%)</span>
-        </small>
-      </h4>
+      <div class="card-body px-2 px-md-4">
+        {% for sec in sections %}
+          <div class="p-3 rounded-3 mb-4 {% if not forloop.first %}border-top pt-4{% endif %}" style="background-color: #fcfcfc; border: 1px solid #eee;">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 mb-3">
+              <h5 class="section-title m-0 font-bold text-blue-800">
+                {{ sec.index }}. {{ sec.title }}
+              </h5>
+              <div class="d-flex gap-2 align-items-center bg-white p-1 rounded border">
+                <div class="form-check form-switch m-0 border-end pe-2">
+                  <input class="form-check-input" type="checkbox" role="switch" id="btn-na-{{ sec.index }}" onchange="toggleSection('{{ sec.index }}', 'NA', this)">
+                  <label class="form-check-label small" for="btn-na-{{ sec.index }}">NA</label>
+                </div>
+                <div class="form-check form-switch m-0 border-end pe-2">
+                  <input class="form-check-input" type="checkbox" role="switch" id="btn-miss-{{ sec.index }}" onchange="toggleSection('{{ sec.index }}', '0', this)">
+                  <label class="form-check-label small" for="btn-miss-{{ sec.index }}">Miss</label>
+                </div>
+                <div class="px-2 font-bold text-muted small" id="secScore-{{ sec.index }}">0/0 (0%)</div>
+              </div>
+            </div>
 
-      <div class="grid-12">
-        {% for field in sec.rows %}
-          <div>
-            <label class="form-label">เกณฑ์ {{ forloop.counter }}</label>
-            {{ field }}
-            <div class="text-danger small">{{ field.errors }}</div>
+<div class="grid-questions">
+              {% for row in sec.rows %}
+                <div class="bg-white p-2 rounded border-bottom shadow-xs">
+                  <div class="form-label mb-1 criteria-text" style="font-size: 0.85rem;">
+                    {{ row.label|safe }}
+                  </div>
+                  {{ row.field }}
+                </div>
+              {% endfor %}
+            </div>
+
+            {% if sec.bonus_field %}
+            <div class="mt-3 p-3 bg-blue-50 rounded-2 border-start border-4 border-blue-500">
+                <label class="form-label font-bold text-blue-700 mb-1 small">
+                  หัก/เพิ่มคะแนน
+                </label>
+                <div class="mb-2 text-xs text-gray-600">
+                  {% if sec.index == 1 %} (หัก 1: มีหลายลายมือ/แก้ไขไม่เซ็นกำกับ)
+                  {% elif sec.index == 12 %} (หัก 1 คะแนน จากคะแนนที่ได้ในกรณีมีการบันทึกไม่ต่อเนื่องทุกวันและทุกเวร)
+                  {% endif %}
+                </div>
+                <div style="max-width: 100px;">{{ sec.bonus_field }}</div>
+            </div>
+            {% endif %}
+
+            <div class="mt-3">
+              <label class="form-label small font-bold">ข้อเสนอแนะ:</label>
+              {{ sec.note }}
+            </div>
           </div>
         {% endfor %}
       </div>
-
-      <div class="mt-2">
-        <label class="form-label">หมายเหตุ</label>
-        {{ sec.note }}
-        <div class="text-danger small">{{ sec.note.errors }}</div>
-      </div>
     </div>
-  {% endfor %}
-</div>
 
-
-    <!-- แถวสรุป/หมายเหตุเพิ่มเติมถ้าต้องการ -->
-    <!-- <div class="row mt-3 g-3">
-      <div class="col-md-2">
-        <label class="form-label">คะแนนเต็ม</label>
-        {{ form.max_score }}
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">คะแนนที่ได้</label>
-        {{ form.final_score }}
-      </div>
-      <div class="col-md-8">
-        <label class="form-label">หมายเหตุ</label>
-        {{ form.note }}
-      </div>
+    <div class="d-grid d-md-flex justify-content-center gap-2 mb-5">
+      <button class="btn btn-primary btn-lg px-5 shadow" type="submit" id="submitBtn">บันทึกข้อมูล</button>
+      <a class="btn btn-outline-secondary btn-lg px-4" href="{% url 'MRA:score_list' %}">ยกเลิก</a>
     </div>
-  </div>
-</div> -->
-
-
-    <div class="d-flex justify-content-center gap-2 mt-3 mb-3">
-  <button class="btn btn-primary btn-sm" type="submit">บันทึก</button>
-  <a class="btn btn-outline-secondary btn-sm" href="{% url 'MRA:score_list' %}">ยกเลิก</a>
-</div>
   </form>
 </div>
 
-<script>
-function updateLiveScore() {
-  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
-  let counted = 0, yes = 0;
-  selects.forEach(sel => {
-    const v = sel.value;
-    if (v !== 'NA') {
-      counted += 1;
-      if (v === '1') yes += 1;
+  <script>
+
+document.addEventListener('DOMContentLoaded', function () {
+    const radios = document.querySelectorAll('input[name="overall_finding"]');
+    const noteInput = document.getElementById('id_certain_issue_note');
+
+    function toggleNoteInput() {
+        let selectedValue = null;
+        radios.forEach(radio => {
+            if (radio.checked) selectedValue = radio.value;
+        });
+
+        if (noteInput) {
+            if (selectedValue === 'certain_issue') {
+                noteInput.disabled = false;
+                noteInput.focus();
+            } else {
+                noteInput.disabled = true;
+                noteInput.value = '';
+            }
+        }
     }
-  });
-  const pct = counted > 0 ? (yes / counted * 100) : 0;
-  document.getElementById('liveScore').textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
-}
-document.addEventListener('change', (e) => {
-  if (e.target.matches('select[name^="s"]')) updateLiveScore();
+
+    radios.forEach(radio => radio.addEventListener('change', toggleNoteInput));
+    if (noteInput) toggleNoteInput();
 });
-document.addEventListener('DOMContentLoaded', updateLiveScore);
-</script>
 
+function calculateScores() {
+    let globalYes = 0;
+    let globalCounted = 0;
 
+    for (let i = 1; i <= 12; i++) {
+        const selects = document.querySelectorAll(`select[id^="id_s${i}_"]`);
+        let secYes = 0;
+        let secCounted = 0;
 
+        selects.forEach(sel => {
+            const v = sel.value;
+            if (v === '1') {
+                secYes++;
+                secCounted++;
+            } else if (v === '0') {
+                secCounted++;
+            }
+        });
 
-<script>
-function updateOverallScore() {
-  const selects = Array.from(document.querySelectorAll('select[name^="s"]'));
-  let counted = 0, yes = 0;
-  for (const sel of selects) {
-    const v = sel.value;
-    if (v !== 'NA') {
-      counted++;
-      if (v === '1') yes++;
+        const bonusField = document.querySelector(`select[name="bonus_s${i}"]`);
+        let bonusVal = 0;
+        if (bonusField && bonusField.value) {
+            bonusVal = parseInt(bonusField.value) || 0;
+        }
+
+        let adjustedSecYes = secYes + bonusVal;
+        if (adjustedSecYes < 0) adjustedSecYes = 0;
+
+        const secPct = secCounted > 0 ? (adjustedSecYes / secCounted * 100) : 0;
+        const span = document.getElementById(`secScore-${i}`);
+        if (span) {
+            span.textContent = `${adjustedSecYes}/${secCounted} (${secPct.toFixed(0)}%)`;
+        }
+
+        globalYes += secYes;
+        globalCounted += secCounted;
     }
-  }
-  const pct = counted ? (yes / counted * 100) : 0;
-  const el = document.getElementById('liveScore');
-  if (el) el.textContent = `คะแนน: ${yes}/${counted} (${pct.toFixed(2)}%)`;
-}
 
-function updateSectionScores() {
-  // วน 12 หัวข้อ
-  for (let i = 1; i <= 12; i++) {
-    const selects = Array.from(document.querySelectorAll(`select[name^="s${i}_"]`));
-    let counted = 0, yes = 0;
-    for (const sel of selects) {
-      const v = sel.value;
-      if (v !== 'NA') {
-        counted++;
-        if (v === '1') yes++;
-      }
+    const b1 = document.getElementsByName('bonus_s1')[0];
+    const b12 = document.getElementsByName('bonus_s12')[0];
+    let totalBonus = 0;
+    if (b1) totalBonus += parseInt(b1.value || 0);
+    if (b12) totalBonus += parseInt(b12.value || 0);
+
+    let finalYes = globalYes + totalBonus;
+    if (finalYes < 0) finalYes = 0;
+    
+    const globalPct = globalCounted > 0 ? (finalYes / globalCounted * 100) : 0;
+    const liveScoreEl = document.getElementById('liveScore');
+    if (liveScoreEl) {
+        liveScoreEl.textContent = `คะแนนรวม: ${finalYes}/${globalCounted} (${globalPct.toFixed(2)}%)`;
     }
-    const pct = counted ? (yes / counted * 100) : 0;
-    const span = document.getElementById(`secScore-${i}`);
-    if (span) span.textContent = `${yes}/${counted} (${pct.toFixed(0)}%)`;
-  }
 }
 
-function updateAllScores() {
-  updateOverallScore();
-  updateSectionScores();
-}
+document.addEventListener('DOMContentLoaded', () => {
+    calculateScores();
+    document.addEventListener('change', (e) => {
 
-document.addEventListener('change', (e) => {
-  if (e.target.matches('select[name^="s"]')) updateAllScores();
+        if (e.target.matches('select[name^="s"]') || e.target.matches('select[name^="bonus"]')) {
+            calculateScores();
+        }
+    });
 });
-document.addEventListener('DOMContentLoaded', updateAllScores);
+
+
+function toggleSection(secIndex, mode, checkbox) {
+    const selects = document.querySelectorAll(`select[id^="id_s${secIndex}_"]`);
+
+    const bonusField = document.querySelector(`select[name="bonus_s${secIndex}"]`);
+    
+    if (checkbox.checked) {
+
+        if (mode === 'NA') {
+
+            const missBtn = document.getElementById(`btn-miss-${secIndex}`);
+            if (missBtn && missBtn.checked) {
+                missBtn.checked = false;
+            }
+            if (bonusField) {
+                bonusField.value = '0';
+                bonusField.style.backgroundColor = "#e9ecef";
+                bonusField.style.pointerEvents = "none";
+            }
+
+        } else if (mode === '0') {
+            const naBtn = document.getElementById(`btn-na-${secIndex}`);
+            if (naBtn && naBtn.checked) {
+                naBtn.checked = false; 
+            }
+
+
+            if (bonusField) {
+                bonusField.style.backgroundColor = "";
+                bonusField.style.pointerEvents = "";
+
+            }
+        }
+
+
+        selects.forEach(select => {
+            select.value = mode; 
+            select.style.backgroundColor = "#e9ecef"; 
+            select.style.pointerEvents = "none";      
+            select.tabIndex = -1; 
+        });
+
+    } else { 
+
+        if (mode === 'NA' && bonusField) {
+            bonusField.style.backgroundColor = "";
+            bonusField.style.pointerEvents = "";
+            bonusField.value = '0';
+        }
+
+        selects.forEach(select => {
+            select.value = ""; 
+            select.style.backgroundColor = "";
+            select.style.pointerEvents = "";
+            select.tabIndex = 0;
+        });
+    }
+
+    calculateScores();
+}
 </script>
-</body>
-</html>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const form = document.querySelector("form"); // อ้างอิงฟอร์มในหน้า
+    if (!form) return;
+
+    const formId = window.location.pathname; // ใช้ path ของ url เป็น key ในการจำค่า
+
+    // 1. คืนค่าฟอร์มกลับมาถ้ารีเฟรช (และฟอร์มนั้นไม่ได้มี id ว่ากำลังแก้ไขอยู่)
+    if (!window.location.pathname.includes('/edit/')) { 
+        const savedData = sessionStorage.getItem("draft_" + formId);
+        if (savedData) {
+            const data = JSON.parse(savedData);
+            for (const key in data) {
+                const elements = form.elements[key];
+                if (elements) {
+                    if (elements.type === 'checkbox' || elements.type === 'radio') {
+                        // ถ้าเป็นกลุ่ม Radio ต้องวนลูปหาตัวที่ value ตรงกัน
+                        if (elements.length) { 
+                            Array.from(elements).forEach(el => {
+                                if (el.value === data[key]) el.checked = true;
+                            });
+                        } else {
+                            elements.checked = data[key]; // กรณีเป็น Checkbox เดี่ยว
+                        }
+                    } else {
+                        elements.value = data[key]; // กรณี Text/Select
+                    }
+                }
+            }
+        }
+    }
+
+    // 2. คอยจับเวลาผู้ใช้พิมพ์หรือเลือก เพื่อบันทึกค่าลง Storage
+    form.addEventListener("input", function(e) {
+        let data = JSON.parse(sessionStorage.getItem("draft_" + formId) || "{}");
+        const target = e.target;
+        
+        if (target.name) {
+            if (target.type === 'checkbox') {
+                data[target.name] = target.checked;
+            } else if (target.type === 'radio') {
+                if (target.checked) data[target.name] = target.value;
+            } else {
+                data[target.name] = target.value;
+            }
+            sessionStorage.setItem("draft_" + formId, JSON.stringify(data));
+        }
+    });
+
+    form.addEventListener("submit", function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            setTimeout(() => {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = 'กำลังบันทึก...';
+            }, 0);
+        }
+
+        sessionStorage.removeItem("draft_" + formId);
+    });
+});
+</script>
 {% endblock %}

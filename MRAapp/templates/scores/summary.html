@@ -7,9 +7,8 @@
     <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">ภาพรวมแต่ละเกณฑ์รายเกณฑ์</h3>
 
     <form class="d-flex gap-2" method="get">
-      <input type="text" name="q" value="{{ q }}" 
-       class="form-control" style="min-width: 400px;"
-       placeholder="เช่น 09/09/2025 หรือ 01/09/2025 - 10/09/2025">
+      <input type="text" name="q" value="{{ q }}" class="form-control" style="min-width: 400px;"
+        placeholder="เช่น 01/09/2025 - 10/09/2025">
       <button class="btn btn-primary" type="submit">ค้นหา</button>
       <a class="btn btn-outline-secondary" href="{% url 'MRA:score_summary' %}">ล้าง</a>
     </form>
@@ -18,83 +17,158 @@
   <div class="table-responsive">
     <table class="table table-bordered table-sm align-middle">
       <thead class="table-warning text-center">
-        <tr>    
+        <tr>
           <th style="white-space:nowrap;">หัวข้อ</th>
-          {% for k in "123456789" %}
+          <th style="white-space:nowrap; width: 80px;">จำนวนรายการ</th> 
+          {% with first_row=rows|first %}
+          {% for c in first_row.cols %}
             <th>เกณฑ์ข้อ {{ forloop.counter }}</th>
           {% endfor %}
+          {% endwith %}
           <th class="bg-warning text-dark">เฉลี่ย</th>
         </tr>
       </thead>
       <tbody>
         {% for row in rows %}
-          <tr>
-            <th class="bg-light" style="white-space:nowrap;">{{ row.index }}. {{ row.title }}</th>
-            {% for c in row.cols %}
-              <td class="text-end">{{ c.percent|floatformat:2 }}</td>
-            {% endfor %}
-            <td class="text-end fw-bold bg-warning-subtle">{{ row.avg|floatformat:2 }}</td>
-          </tr>
+        <tr>
+          <th class="bg-light" style="white-space:nowrap;">{{ row.index }}. {{ row.title }}</th>
+          
+          <td class="text-center fw-bold text-primary bg-light">{{ row.records_count }}</td> 
+          
+          {% for c in row.cols %}
+            {% if c.is_empty %}
+              <td class="text-center bg-light text-muted">-</td>
+            {% else %}
+              <!-- เช็คเงื่อนไขถ้าน้อยกว่า 85 ให้ใส่คลาส text-danger (สีแดง) -->
+              <td class="text-end {% if c.percent < 85 %}text-danger fw-bold{% endif %}">{{ c.percent|floatformat:2 }}</td>
+            {% endif %}
+          {% endfor %}
+          
+          {% if row.is_empty_avg %}
+            <td class="text-center fw-bold bg-warning-subtle text-muted">-</td>
+          {% else %}
+            <!-- เช็คเงื่อนไขถ้าน้อยกว่า 85 ให้ใส่คลาส text-danger (สีแดง) -->
+            <td class="text-end fw-bold bg-warning-subtle {% if row.avg < 85 %}text-danger{% endif %}">{{ row.avg|floatformat:2 }}</td>
+          {% endif %}
+        </tr>
         {% endfor %}
+        
         <tr class="fw-bold">
           <th class="bg-secondary-subtle">Total</th>
+          <td class="text-center bg-secondary-subtle text-primary"></td> 
+          
           {% for c in total_cols %}
-            <td class="text-end">{{ c.percent|floatformat:2 }}</td>
+            {% if c.is_empty %}
+              <td class="text-center bg-secondary-subtle text-muted">-</td>
+            {% else %}
+              <!-- เช็คเงื่อนไขถ้าน้อยกว่า 85 ให้ใส่คลาส text-danger (สีแดง) -->
+              <td class="text-end bg-secondary-subtle {% if c.percent < 85 %}text-danger{% endif %}">{{ c.percent|floatformat:2 }}</td>
+            {% endif %}
           {% endfor %}
-          <td class="text-end bg-secondary-subtle">{{ total_avg|floatformat:2 }}</td>
+          <!-- เช็คเงื่อนไขถ้าน้อยกว่า 85 ให้ใส่คลาส text-danger (สีแดง) -->
+          <td class="text-end bg-secondary-subtle {% if total_avg < 85 %}text-danger{% endif %}">{{ total_avg|floatformat:2 }}</td>
         </tr>
       </tbody>
     </table>
   </div>
 
-  <h3 class="mt-4 mb-3" style="font-size: 24px; font-weight: bold;">แสดงผลเป็นกราฟแท่ง</h3>
-<div class="card p-3 shadow-sm">
-  <div class="row g-4">
-    <div class="col-lg-6">
-      <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อเกณฑ์ (รวมทุกหัวข้อ)</h6>
-      <div style="height:320px"><canvas id="ipdAvgByCriterionChart"></canvas></div>
-    </div>
-    <div class="col-lg-6">
-      <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อหัวข้อ</h6>
-      <div style="height:320px"><canvas id="ipdAvgBySectionChart"></canvas></div>
-    </div>
+  <h3 class="mt-4 mb-3" style="font-size: 24px; font-weight: bold;">แสดงผลเป็นกราฟ</h3>
+  
+  <div class="card p-3 shadow-sm mb-4">
+    <h6 class="text-muted mb-2 fw-bold"><i class="fas fa-chart-line text-primary"></i>คะแนนเฉลี่ยรวมรายเดือน</h6>
+    <div style="height:300px"><canvas id="monthlyTrendChart"></canvas></div>
   </div>
-
-  <hr class="my-4">
-
-  <div class="row g-3 align-items-center">
-    <div class="col-auto">
-      <label class="col-form-label">ดูรายละเอียดเกณฑ์ตามหัวข้อ</label>
+  <div class="card p-3 shadow-sm">
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อเกณฑ์ (รวมทุกหัวข้อ)</h6>
+        <div style="height:320px"><canvas id="ipdAvgByCriterionChart"></canvas></div>
+      </div>
+      <div class="col-lg-6">
+        <h6 class="text-muted mb-2">ค่าเฉลี่ยต่อหัวข้อ</h6>
+        <div style="height:320px"><canvas id="ipdAvgBySectionChart"></canvas></div>
+      </div>
     </div>
-    <div class="col-auto">
-      <select id="ipdSectionSelect" class="form-select form-select-sm">
-        {% for row in rows %}
+
+    <hr class="my-4">
+
+    <div class="row g-3 align-items-center">
+      <div class="col-auto">
+        <label class="col-form-label">ดูรายละเอียดเกณฑ์ตามหัวข้อ</label>
+      </div>
+      <div class="col-auto">
+        <select id="ipdSectionSelect" class="form-select form-select-sm">
+          {% for row in rows %}
           <option value="{{ forloop.counter0 }}">{{ row.index }}. {{ row.title }}</option>
-        {% endfor %}
-      </select>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="mt-3" style="height:340px">
+      <canvas id="ipdSectionDetailChart"></canvas>
     </div>
   </div>
-  <div class="mt-3" style="height:340px">
-    <canvas id="ipdSectionDetailChart"></canvas>
-  </div>
-</div>
 
-
+<!-- โหลด Chart.js และ Plugin สำหรับแสดงตัวเลข -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+
 <script>
 (() => {
-  // ----- เตรียมข้อมูลจาก context -----
-  // ป้ายเกณฑ์ 1..9
-  const itemLabels = [{% for k in "123456789" %}"เกณฑ์ {{ forloop.counter }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+  // ลงทะเบียนปลั๊กอินให้ Chart.js รู้จัก
+  Chart.register(ChartDataLabels);
 
-  // รวมทุกหัวข้อต่อเกณฑ์ (มาจาก total_cols)
-  const totalPercents = [{% for c in total_cols %}{{ c.percent|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  // --- ส่วนของกราฟเส้นรายเดือน (Trend) ---
+  const trendLabels = {{ trend_labels|safe|default:'[]' }};
+  const trendData = {{ trend_data|safe|default:'[]' }};
 
-  // ป้ายหัวข้อ + ค่าเฉลี่ยต่อหัวข้อ (row.avg)
-  const sectionLabels = [{% for r in rows %}"{{ r.index }}. {{ r.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
-  const sectionAvgs   = [{% for r in rows %}{{ r.avg|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  new Chart(document.getElementById('monthlyTrendChart').getContext('2d'), {
+      type: 'line',
+      data: {
+          labels: trendLabels,
+          datasets: [{
+              label: 'คะแนนเฉลี่ยรวม (%)',
+              data: trendData,
+              borderColor: 'rgba(13, 110, 253, 1)', // สีน้ำเงิน Primary
+              backgroundColor: 'rgba(13, 110, 253, 0.15)',
+              borderWidth: 2,
+              fill: false,
+              tension: 0.3, 
+              pointBackgroundColor: 'rgba(13, 110, 253, 1)',
+              pointRadius: 3,
+              pointHoverRadius: 7
+          }]
+      },
+      options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          layout: {
+              padding: { top: 25 } // เพิ่มพื้นที่ด้านบนไม่ให้ตัวเลขโดนตัด
+          },
+          scales: {
+              y: { beginAtZero: true, suggestedMax: 100, ticks: { callback: v => v + '%' } }
+          },
+          plugins: {
+              legend: { display: false },
+              // ตั้งค่าแสดงตัวเลขบนจุดกราฟเส้น
+              datalabels: {
+                  anchor: 'end',
+                  align: 'top',
+                  color: '#0d6efd',
+                  font: { weight: 'bold', size: 11 },
+                  formatter: value => Number(value).toFixed(2) + '%'
+              },
+              tooltip: { 
+                  callbacks: { 
+                      label: ctx => ' ค่าเฉลี่ย: ' + Number(ctx.parsed.y).toFixed(2) + '%' 
+                  } 
+              }
+          }
+      }
+  });
 
-  // เมทริกซ์เปอร์เซ็นต์: แถว = หัวข้อ, คอลัมน์ = เกณฑ์ 1..9
+
+  // --- ส่วนของกราฟแท่ง (ของเดิม) ---
   const sectionsMatrix = [
     {% for r in rows %}
       [{% for c in r.cols %}{{ c.percent|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}]
@@ -102,43 +176,93 @@
     {% endfor %}
   ];
 
+  const numCriteria = sectionsMatrix.length > 0 ? sectionsMatrix[0].length : 0;
+  const itemLabels = [];
+  for (let i = 1; i <= numCriteria; i++) {
+      itemLabels.push("เกณฑ์ " + i);
+  }
+
+  const totalPercents = [{% for c in total_cols %}{{ c.percent|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const sectionLabels = [{% for r in rows %}"{{ r.index }}. {{ r.title|escapejs }}"{% if not forloop.last %}, {% endif %}{% endfor %}];
+  const sectionAvgs   = [{% for r in rows %}{{ r.avg|default:'0' }}{% if not forloop.last %}, {% endif %}{% endfor %}];
+
+  const overallAvg = {{ total_avg|default:'0' }};
+  const totalBarColor = 'rgba(255, 193, 7, 0.8)'; 
+
   const commonOpts = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+        padding: { top: 25 } // เพิ่มพื้นที่ด้านบนให้กราฟแท่ง
+    },
     scales: {
       y: { beginAtZero: true, suggestedMax: 100, ticks: { callback: v => v + '%' } }
     },
     plugins: {
       legend: { display: false },
-      tooltip: { callbacks: { label: ctx => (ctx.parsed.y ?? ctx.parsed) + '%' } }
+      // ตั้งค่าแสดงตัวเลขบนยอดเสากราฟแท่ง
+      datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#495057',
+          font: { weight: 'bold', size: 11 },
+          formatter: value => Number(value).toFixed(2) + '%'
+      },
+      tooltip: { 
+        callbacks: { 
+          label: ctx => {
+              let val = ctx.parsed.y ?? ctx.parsed;
+              return Number(val).toFixed(2) + '%';
+          }
+        } 
+      }
     }
   };
 
-  // 1) ค่าเฉลี่ยต่อเกณฑ์ (รวมทุกหัวข้อ)
+  const criterionLabels = [...itemLabels, "Total "];
+  const criterionData = [...totalPercents, overallAvg];
+  const criterionColors = itemLabels.map(() => 'rgba(54, 162, 235, 0.6)');
+  criterionColors.push(totalBarColor);
+
   new Chart(document.getElementById('ipdAvgByCriterionChart').getContext('2d'), {
     type: 'bar',
-    data: { labels: itemLabels, datasets: [{ data: totalPercents }] },
+    data: { labels: criterionLabels, datasets: [{ data: criterionData, backgroundColor: criterionColors }] },
     options: commonOpts
   });
 
-  // 2) ค่าเฉลี่ยต่อหัวข้อ
+  const sectionChartLabels = [...sectionLabels, "Total "];
+  const sectionChartData = [...sectionAvgs, overallAvg];
+  const sectionChartColors = sectionLabels.map(() => 'rgba(75, 192, 192, 0.6)');
+  sectionChartColors.push(totalBarColor);
+
   new Chart(document.getElementById('ipdAvgBySectionChart').getContext('2d'), {
     type: 'bar',
-    data: { labels: sectionLabels, datasets: [{ data: sectionAvgs }] },
+    data: { labels: sectionChartLabels, datasets: [{ data: sectionChartData, backgroundColor: sectionChartColors }] },
     options: commonOpts
   });
 
-  // 3) เลือกหัวข้อ → ดูค่าเฉลี่ยเกณฑ์ 1–9 ของหัวข้อนั้น
   const detailCtx = document.getElementById('ipdSectionDetailChart').getContext('2d');
   const selectEl  = document.getElementById('ipdSectionSelect');
+  
+  const detailLabels = [...itemLabels, "Total "];
+  const detailColors = itemLabels.map(() => 'rgba(153, 102, 255, 0.6)');
+  detailColors.push(totalBarColor);
+
+  function getDetailData(index) {
+      const data = [...(sectionsMatrix[index] || [])];
+      data.push(sectionAvgs[index] || 0);
+      return data;
+  }
+
   const detailChart = new Chart(detailCtx, {
     type: 'bar',
-    data: { labels: itemLabels, datasets: [{ data: sectionsMatrix[0] || [] }] },
+    data: { labels: detailLabels, datasets: [{ data: getDetailData(0), backgroundColor: detailColors }] },
     options: commonOpts
   });
+
   selectEl.addEventListener('change', () => {
     const idx = parseInt(selectEl.value, 10) || 0;
-    detailChart.data.datasets[0].data = sectionsMatrix[idx] || [];
+    detailChart.data.datasets[0].data = getDetailData(idx);
     detailChart.update();
   });
 })();

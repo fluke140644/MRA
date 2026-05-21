@@ -1,69 +1,94 @@
 {% extends 'baseipd.html' %}
 {% load static %}
 
-<title>{% block title %}รายการ IPD {% endblock %}</title>
+{% block title %}รายการ IPD{% endblock %}
+
 {% block content %}
-
-
-</head>
-<body class="bg-light">
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-  <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">รายการแบบประเมิน</h3>
-  
-  <!-- กลุ่มปุ่ม -->
-  <div class="ms-auto d-flex gap-2">
-    <a href="{% url 'MRA:score_create' %}" class="btn btn-primary">สร้างแบบประเมิน</a>
-    <a href="{% url 'MRA:score_summary' %}" class="btn btn-primary">ภาพรวมแต่ละเกณฑ์</a>
-    <a href="{% url 'MRA:score_coverage' %}" class="btn btn-outline-primary">สรุปจำนวนที่ตรวจ</a>
-  </div>
-</div>
-
-  <form method="get" class="d-flex gap-2 mt-3 mb-2">
-  <input type="text" name="q" value="{{ q }}" class="form-control"
-       placeholder="พิมพ์ HN/AN หรือวันที่: 09/09/2025-10/09/2025">
-
-  <input type="number" name="limit" value="{{ limit|default_if_none:'' }}" 
-         class="form-control" style="max-width:100px;" placeholder="Limit">
-
-  <button type="submit" class="btn btn-outline-primary">ค้นหา</button>
-  <a href="{% url 'MRA:score_list' %}" class="btn btn-outline-secondary">ล้าง</a>
-</form>
-
-  <div class="card">
-    <div class="table-responsive">
-      <table class="table table-hover table-bordered align-middle mb-0">
-        <thead class="table-light">
-          <tr class="text-center">
-            <th>วันที่</th>
-            <th>Hcode</th>
-            <th>HN</th>
-            <th>AN</th>
-            <th>คะแนน</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for item in items %}
-          <tr class="text-center">
-            <td>{{ item.created_at|date:"d/m/Y H:i" }}</td>
-            <td>{{ item.hcode }}</td>
-            <td>{{ item.hn }}</td>
-            <td>{{ item.an }}</td>
-            <td>{{ item.total_yes }}/{{ item.total_counted }} ({{ item.percent|floatformat:1 }}%)</td>
-            <td><a href="{% url 'MRA:score_detail' item.id %}" class="btn btn-sm btn-primary">ดูรายละเอียด</a></td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="6" class="text-center text-muted py-4">ยังไม่มีข้อมูล</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
+<div class="container py-3 md:py-4">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
+        <h3 class="m-0 font-bold text-xl md:text-2xl text-gray-800">รายการบันทึกคะแนน IPD</h3>
+        
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'MRA:score_create' %}" class="btn btn-primary btn-sm md:btn-md flex-fill">
+                <span class="d-none d-sm-inline">สร้างแบบบันทึกคะแนน</span>
+                <span class="d-inline d-sm-none">สร้างแบบบันทึกคะแนน</span>
+            </a>
+            <a href="{% url 'MRA:score_summary' %}" class="btn btn-primary btn-sm md:btn-md flex-fill">ภาพรวม</a>
+            <a href="{% url 'MRA:score_coverage' %}" class="btn btn-outline-primary btn-sm md:btn-md flex-fill">สรุปจำนวน</a>
+        </div>
     </div>
-  </div>
-  <div class="p-2 text-end text-muted">
-  รวมทั้งหมด {{ items|length }} รายการ
+
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-8 col-md-7">
+            <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm md:form-control-lg"
+                   placeholder="HN/AN หรือ วันที่">
+        </div>
+        <div class="col-4 col-md-2">
+            <input type="number" name="limit" value="{{ limit|default_if_none:'' }}" 
+                   class="form-control form-control-sm md:form-control-lg" placeholder="Limit">
+        </div>
+        <div class="col-12 col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-sm md:btn-md btn-primary flex-fill">ค้นหา</button>
+            <a href="{% url 'MRA:score_list' %}" class="btn btn-sm md:btn-md btn-outline-secondary flex-fill">ล้าง</a>
+        </div>
+    </form>
+
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle mb-0" style="min-width: 600px;">
+                <thead class="table-light text-xs md:text-sm uppercase tracking-wider">
+                    <tr class="text-center">
+                        <th style="width: 20%;">วันที่</th>
+                        <th class="d-none d-md-table-cell">Hcode</th>
+                        <th>HN</th>
+                        <th>AN</th>
+                        <th>คะแนน</th>
+                        <th>จัดการ</th>
+                    </tr>
+                </thead>
+                <tbody class="text-xs md:text-base">
+                    {% for item in items %}
+                    <tr class="text-center">
+                        <td class="px-1 py-3">
+                            <div class="font-medium">{{ item.created_at|date:"d/m/Y" }}</div>
+                            <div class="text-[10px] text-gray-400 d-md-none">{{ item.created_at|date:"H:i" }} น.</div>
+                        </td>
+                        <td class="d-none d-md-table-cell text-muted">{{ item.hcode }}</td>
+                        <td class="font-semibold">{{ item.hn }}</td>
+                        <td>{{ item.an }}</td>
+                        <td>
+                            <div class="font-bold text-blue-600">{{ item.percent|floatformat:1 }}%</div>
+                            <div class="text-[10px] text-gray-500 d-none d-sm-block">{{ item.total_yes }}/{{ item.total_counted }}</div>
+                        </td>
+                        <td class="px-1">
+                            <a href="{% url 'MRA:score_detail' item.id %}" class="btn btn-sm btn-outline-primary py-1 px-2 text-[10px] md:text-xs">
+                                ดูข้อมูล
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="6" class="text-center text-muted py-5 italic">ไม่พบข้อมูลการบันทึก</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="p-3 text-end text-sm text-gray-500">
+        รวมทั้งหมด <span class="font-bold text-black">{{ items|length }}</span> รายการ
+    </div>
 </div>
-</div>
-</body>
-</html>
+
+<style>
+    /* ปรับแต่งพิเศษสำหรับ Mobile */
+    @media (max-width: 768px) {
+        .table td, .table th {
+            padding: 8px 4px !important;
+            font-size: 13px;
+        }
+        .btn-sm {
+            font-size: 12px;
+        }
+    }
+</style>
 {% endblock %}

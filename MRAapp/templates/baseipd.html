@@ -6,154 +6,185 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}แบบตรวจประเมินคุณภาพการบันทึกเวชระเบียนผู้ป่วยใน Medical Record Audit Form (IPD){% endblock %}</title>
+    <link rel="icon" type="image/png" href="{% static 'MRAapp/images/sdh.png' %}">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap">
+
+    <style>
+        body { font-family: "Sarabun", sans-serif; }
+        .no-print { display: inline-block; }
+        .print-only { display: none; }
+        .page-break { page-break-before: always; }
+
+        .collapse.show { visibility: visible !important; display: block !important; }
+        .collapsing { visibility: visible !important; }
+
+        /* ปรับแต่ง Navbar สำหรับหน้าจอเล็ก */
+        @media (max-width: 768px) {
+            .system-title { font-size: 14px; text-align: center; }
+            .nav-container { padding: 0.5rem; }
+        }
+
+        @media print {
+            @page { size: A4 portrait; margin: 12mm; }
+            .no-print, .btn, .navbar, .alert { display: none !important; }
+            .print-only { display: block !important; }
+            .card { border: 1px solid #999 !important; break-inside: avoid; }
+        }
+    </style>
     {% block head %}{% endblock %}
 </head>
-<!-- (ไม่บังคับ) โหลดฟอนต์ไทยเวลา print -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap">
 
-<style>
-/* ปุ่ม/บล็อกที่ให้แสดงเฉพาะหน้าจอ */
-.no-print { display: inline-block; }
-.print-only { display: none; }
-
-/* utility */
-.page-break { page-break-before: always; }
-
-/* สไตล์สำหรับการพิมพ์ */
-@media print {
-  @page { size: A4 portrait; margin: 12mm; }    /* เปลี่ยนเป็น landscape ได้ด้านล่างด้วย JS */
-  html, body { height: auto; }
-  body {
-    font-family: "Sarabun", "TH Sarabun New", Tahoma, sans-serif;
-    font-size: 11pt;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  /* ซ่อนสิ่งที่ไม่อยากพิมพ์ */
-  .no-print, .btn, .navbar, .nav, .sidebar, .footer, .alert { display: none !important; }
-
-  /* ขยายคอนเทนเนอร์ให้เต็มกระดาษ */
-  .container, .container-fluid { width: auto !important; max-width: none !important; padding: 0 !important; }
-
-  /* การ์ดให้ขอบบาง ไม่มีเงา และไม่แตกหน้า */
-  .card {
-    box-shadow: none !important;
-    border: 1px solid #999 !important;
-    break-inside: avoid;
-    page-break-inside: avoid;
-    margin-bottom: 8mm;
-  }
-  .card-header {
-    background: #f2f2f2 !important;
-    border-bottom: 1px solid #999 !important;
-  }
-
-  /* ตารางอ่านง่าย และหัวตารางซ้ำทุกหน้า */
-  .table { font-size: 10pt; }
-  .table thead { display: table-header-group; }
-  .table tfoot { display: table-footer-group; }
-  .table tr { page-break-inside: avoid; }
-
-  /* แสดงบล็อกเฉพาะตอนพิมพ์ */
-  .print-only { display: block !important; }
-}
-</style>
-
-<body>
+<body class="bg-gray-50">
     
-    <!-- Navbar -->
-<nav class="bg-white shadow-md px-6 py-4 flex items-center justify-between relative" style="z-index: 10;">
-    <!-- Left: Logo + Hospital Name -->
-    <div class="flex items-center gap-3 sm:gap-4 lg:gap-6">
-  <a href="/" class="flex items-center gap-2 sm:gap-3">
-    <img src="{% static 'MRAapp/images/sdh.png' %}" alt="Logo" class="h-10 w-10 rounded-full">
-    <span class="text-lg font-semibold text-gray-800">โรงพยาบาลสมเด็จ</span>
-  </a>
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center h-16">
+                
+                <div class="flex items-center gap-2">
+                    <a href="/" class="flex items-center gap-2">
+                        <img src="{% static 'MRAapp/images/sdh.png' %}" alt="Logo" class="h-8 w-8 sm:h-10 sm:w-10 rounded-full">
+                        <span class="hidden md:block font-bold text-gray-800">โรงพยาบาลสมเด็จ</span>
+                    </a>
+                </div>
 
-  <!-- <a href="{% url 'MRA:opd_score_list' %}" class="text-gray-700 hover:text-blue-600">
-    OPD
-  </a> -->
-  <div class="dropdown">
-  <button class="btn dropdown-toggle font-semibold text-gray-800"
-          style="font-size:16px"
-          type="button" id="dropdownMenuButton"
-          data-bs-toggle="dropdown" aria-expanded="false">
-    รายการ OPD IPD
-  </button>
+                <div class="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none">
+                    <span class="text-blue-800 font-bold text-sm sm:text-lg lg:text-xl block">MRA System</span>
+                    <span class="hidden sm:block text-[10px] text-gray-500 uppercase tracking-widest">Medical Record Audit</span>
+                </div>
 
-  {% with name=request.resolver_match.url_name %}
-  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-    <li>
-      <a class="dropdown-item {% if name == 'score_list' %}active{% endif %}"
-         {% if name == 'score_list' %}aria-current="page"{% endif %}
-         href="{% url 'MRA:score_list' %}">
-        รายการ IPD
-      </a>
-    </li>
+<div class="flex items-center gap-2">
+    <div class="dropdown">
+        <button class="btn btn-sm btn-outline-primary dropdown-toggle font-semibold flex items-center gap-2" 
+                type="button" id="menuDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <span>เมนูใช้งาน</span>
+        </button>
+        
+        <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2" style="min-width: 200px;">
+            <li><a class="dropdown-item py-2" href="/">หน้าหลัก</a></li>
+            <li><hr class="dropdown-divider"></li>
+            
+            <li class="px-3 py-1 text-[10px] font-bold text-blue-500 uppercase tracking-wider">ระบบงาน IPD</li>
+            <li><a class="dropdown-item" href="{% url 'MRA:score_list' %}">• รายการ IPD</a></li>
+            <li><a class="dropdown-item" href="{% url 'MRA:score_create' %}">• บันทึกคะแนน IPD</a></li>
+            
+            <li><hr class="dropdown-divider"></li>
+            
+            <li class="px-3 py-1 text-[10px] font-bold text-green-600 uppercase tracking-wider">ระบบงาน OPD</li>
+            <li><a class="dropdown-item" href="{% url 'MRA:opd_score_list' %}">• รายการ OPD</a></li>
+            <li><a class="dropdown-item" href="{% url 'MRA:opd_score_create' %}">• บันทึกคะแนน OPD</a></li>
 
-    <li>
-      <a class="dropdown-item {% if name == 'score_create' %}active{% endif %}"
-         {% if name == 'score_create' %}aria-current="page"{% endif %}
-         href="{% url 'MRA:score_create' %}">
-        บันทึกผลคะแนน IPD
-      </a>
-    </li>
+            <li><hr class="dropdown-divider"></li>
+            <li class="px-3 py-1 text-[10px] font-bold text-red-600 uppercase tracking-wider">ข้อเสนอแนะ</li>
+            <li><a class="dropdown-item" href="{% url 'MRA:note_summary' %}">• สรุปข้อเสนอแนะ</a></li>
+            <li><hr class="dropdown-divider"></li>
 
-    <li><hr class="dropdown-divider"></li>
+            <li class="px-3 py-1 text-[10px] font-bold text-blue-500 uppercase tracking-wider">รายการของฉัน</li>
+            <li><a class="dropdown-item" href="{% url 'MRA:my_records' %}">• รายการของฉัน</a></li>
 
-    <li>
-      <a class="dropdown-item {% if name == 'opd_score_list' %}active{% endif %}"
-         {% if name == 'opd_score_list' %}aria-current="page"{% endif %}
-         href="{% url 'MRA:opd_score_list' %}">
-        รายการ OPD
-      </a>
-    </li>
-
-    <li>
-      <a class="dropdown-item {% if name == 'opd_score_create' %}active{% endif %}"
-         {% if name == 'opd_score_create' %}aria-current="page"{% endif %}
-         href="{% url 'MRA:opd_score_create' %}">
-        บันทึกผลคะแนน OPD
-      </a>
-    </li>
-  </ul>
-  {% endwith %}
-</div>
-</div>
-
-    <!-- Center: System Name -->
-    <div class="absolute left-1/2 transform -translate-x-1/2">
-        <span class="text-xl font-bold text-blue-800">Medical Record Audit (MRA)</span>
+            <li><hr class="dropdown-divider border-gray-200"></li>
+            {% if user.is_authenticated %}
+                <li class="px-3 py-2">
+                    <div class="flex flex-col">
+                      <span class="text-xs text-gray-500 italic">ผู้ใช้งานปัจจุบัน:</span>
+                      <span class="text-sm font-bold text-blue-800">
+                      คุณ {{ user.get_full_name|default:user.username }}
+                      </span>
+                    </div>
+                </li>
+                <li><a class="dropdown-item" href="{% url 'MRA:change_password' %}">• เปลี่ยนรหัสผ่าน</a></li>
+                <li>
+                    <a class="dropdown-item text-red-600 font-bold" href="{% url 'logout' %}">ออกจากระบบ</a>
+                </li>
+            {% else %}
+                <li>
+                    <a class="dropdown-item text-blue-600 font-bold" href="{% url 'login' %}">เข้าสู่ระบบ</a>
+                </li>
+            {% endif %}
+        </ul>
     </div>
-    
+</div>
+            </div>
+        </div>
+    </nav>
 
-    <!-- Right: Login/Logout -->
-     {% if request.path == '/listformdata' or request.path == '/report' or request.path|slice:":8" == '/scores/' or request.resolver_match.url_name == 'score_detail' or request.path == '/scores/new/'%}
-    
-    <div class="flex items-center space-x-4">
-        {% if user.is_authenticated %}
-            <span class="text-gray-600">สวัสดี {{ user.username }}</span>
-            <a href="{% url 'logout' %}" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                Logout
-            </a>
-        {% else %}
-            <a href="{% url 'login' %}" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-                Login
-            </a>
-        {% endif %}
-    </div>
-    {% endif %}
-    
-</nav>
+    <main class="container-fluid mx-auto p-3 sm:p-6">
+        {% block content %}{% endblock %}
+    </main>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
 
-    {% block content %}{% endblock %}
+    const alerts = document.querySelectorAll('.alert'); 
     
+    alerts.forEach(function(alert) {
 
+        setTimeout(function() {
+            alert.style.transition = "opacity 0.5s ease";
+            alert.style.opacity = "0";
+            
+
+            setTimeout(function() {
+                alert.remove();
+            }, 500);
+        }, 3000);
+    });
+});
+</script>
+
+<!-- ========================================== -->
+    <!-- ระบบตุ๊กตา Webmeji (ปรับแต่งขนาดและจำนวน) -->
+    <!-- ========================================== -->
+    
+    <!-- 1. ดึงไฟล์สไตล์ CSS และไฟล์ Config ต้นฉบับ -->
+    <link rel="stylesheet" href="https://webmeji.neocities.org/webmeji.css">
+    <script src="https://webmeji.neocities.org/config.js"></script>
+
+    <!-- 2. ส่วนปรับแต่งขนาดตุ๊กตา (CSS Override) -->
+    <style>
+      /* ปรับขนาดบนหน้าจอคอมพิวเตอร์ (ค่าเดิมคือ 100px) */
+      .webmeji-container {
+        width: 50px !important;  /* <-- แก้ตัวเลขตรงนี้ให้ใหญ่หรือเล็กตามต้องการ */
+        height: 50px !important; /* <-- แก้ให้เท่ากับ width เสมอ */
+      }
+      /* ปรับขนาดบนจอมือถือ (ค่าเดิมคือ 50px) */
+      @media (max-width: 768px) {
+        .webmeji-container {
+          width: 30px !important;
+          height: 30px !important;
+        }
+      }
+    </style>
+
+    <!-- 3. บังคับตั้งค่าใหม่ (ลดจำนวน + แก้ Path รูป) -->
+    <!-- <script>
+        // --- เปลี่ยนจำนวนตุ๊กตา ---
+        // ถ้าอยากได้น้อง Miku ตัวเดียว ให้ใส่แบบนี้ครับ
+        window.SPAWNING = [
+          { id: 'webmeji-1', config: 'MIKU_CONFIG' },
+          { id: 'webmeji-2', config: 'SHIMEJI_CONFIG' }
+        ];
+        
+        /* 
+         (ตัวอย่าง) ถ้าอยากได้ตัวสีขาวตัวเดียว ให้เปลี่ยนคำว่า 'MIKU_CONFIG' เป็น 'SHIMEJI_CONFIG' ครับ
+        */
+
+        // --- แก้ Path รูปภาพให้ดึงจากเว็บต้นฉบับ ---
+        const neocitiesUrl = "https://webmeji.neocities.org/";
+        [window.SHIMEJI_CONFIG, window.MIKU_CONFIG].forEach(cfg => {
+            if (!cfg) return;
+            Object.values(cfg).forEach(action => {
+                if (action.frames) {
+                    action.frames = action.frames.map(frame => neocitiesUrl + frame);
+                }
+            });
+        });
+    </script>
+
+    <!-- 4. ดึงสคริปต์หลักให้ตุ๊กตาเริ่มโหลด -->
+    <script src="https://webmeji.neocities.org/webmeji.js"></script>  -->
+    <!-- ========================================== -->
 </body>
-
 </html>

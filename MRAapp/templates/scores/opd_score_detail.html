@@ -1,180 +1,261 @@
 {% extends "baseipd.html" %}
 {% load mra_extras %}
-<title>{% block title %}รายละเอียกคะแนน OPD{% endblock %}</title>
+{% block title %}รายละเอียดคะแนน OPD{% endblock %}
+
 {% block content %}
+<style>
+    /* CSS เฉพาะสำหรับหน้านี้ */
+    .label-text { font-size: 0.85rem; color: #6c757d; display: block; font-weight: 600; }
+    .value-text { font-size: 1rem; color: #212529; display: block; }
+    
+    /* Mobile List Styles */
+    .mobile-item {
+        border-bottom: 1px solid #f0f0f0;
+        padding: 10px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    .mobile-item:last-child { border-bottom: none; }
+    .item-index { min-width: 30px; }
+    .item-score { min-width: 40px; text-align: right; }
+    
+    /* Colors */
+    .score-1 { color: #198754; font-weight: bold; }
+    .score-0 { color: #dc3545; font-weight: bold; }
+    .score-na { color: #adb5bd; font-weight: bold; }
 
-<div class="container py-4">
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3 class="m-0" style="font-size: 24px; font-weight: bold; z-index: 1;">รายละเอียดคะแนน OPD #{{ obj.id }}</h3>
-    <div class="d-flex gap-2">
-  <a href="{% url 'MRA:opd_score_list' %}" class="btn btn-outline-secondary">ย้อนกลับ</a>
-
-  {% if request.user.is_authenticated %}
-    {% if request.user.is_superuser or request.user.is_staff or obj.created_by_id == request.user.id %}
-      <a href="{% url 'MRA:opd_score_update' obj.id %}" class="btn btn-warning">แก้ไข</a>
-    {% endif %}
-  {% endif %}
-
-  <a href="{% url 'MRA:opd_score_create' %}" class="btn btn-primary">บันทึกใหม่</a>
-</div>
-  </div>
-
-  <div class="card mb-3">
-    <div class="card-body">
-      <div class="row g-3">
-        <div class="col-md-2"><strong>Hcode:</strong> {{ obj.hcode }}</div>
-        <div class="col-md-4"><strong>Hname:</strong> {{ obj.hname }}</div>
-        <div class="col-md-2"><strong>HN:</strong> {{ obj.hn }}</div>
-        <div class="col-md-2"><strong>PID:</strong> {{ obj.pid }}</div>
-        <div class="col-md-2"><strong>ประเภท:</strong>
-          {% if obj.is_general %}General{% endif %}{% if obj.is_general and obj.is_chronic %} / {% endif %}{% if obj.is_chronic %}Chronic{% endif %}
-        </div>
-        <div class="col-md-6"><strong>Diagnosis:</strong> {{ obj.diagnosis }}</div>
-        <div class="col-md-2"><strong>ช่วงตรวจ:</strong> {{ obj.audit_period|format_audit_period|default:"-" }}</div>
-        <div class="col-md-2"><strong>1st Visit:</strong> {{ obj.first_visit_date|thai_date:'en'|default:"-" }}</div>
-        <!-- <div class="col-md-2"><strong>1st Visit:</strong> {{ obj.first_visit_date|thai_date:'th'|default:"-" }}</div> -->
-        <div class="col-md-2"><strong>Visit จาก:</strong> {{ obj.visit_date_start|thai_date:'en'|default:"-" }}</div>
-        <div class="col-md-2"><strong>ถึง:</strong> {{ obj.visit_date_end|thai_date:'en'|default:"-" }}</div>
-
-        <div class="col-md-12"><strong>หมายเหตุ:</strong> {{ obj.note }}</div>
-      </div>
-    </div>
-  </div>
-
-<div class="card mb-3">
-  <div class="card-body">
-    <h3 class="m-0" style="font-size: 18px; font-weight: bold; z-index: 1;">สรุปผลรวม</h3>
-    <div>คะแนนรวม: <strong>{{ overall_display.score }}</strong></div>
-    <div>คะแนนเต็ม: <strong>{{ overall_display.possible }}</strong></div>
-    <div>คิดเป็น: <strong>{{ overall_display.percent }}%</strong></div>
-  </div>
-</div>
-
-  {% if sections %}
-    {% for s in sections %}
-    <div class="card mb-3">
-      <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #389750; color: white;">
-        <span>
-          <strong>ส่วนที่ {{ s.index }}:</strong> {{ s.title }}
-          {% if s.index == 5 and s.items_by_visit %}
-            <!-- — ใช้ผลจาก <u>ครั้งที่ {{ s.active_visit|default:1 }}</u> -->
-            <!-- <span class="ms-2">
-              <span class="badge bg-light text-dark">ครั้งที่ 1</span>
-              <span class="badge bg-light text-dark">ครั้งที่ 2</span>
-              <span class="badge bg-light text-dark">ครั้งที่ 3</span>
-            </span> -->
-          {% endif %}
-        </span>
-        {% with sc=s.display_score|default:s.score ps=s.display_possible|default:s.possible %}
-<span>
-  คะแนน: <strong>{{ sc }}/{{ ps }}</strong>
-  {% if s.locked %}<span class="badge ms-2" style="background-color: #ff0000;">LOCKED</span>{% endif %}
-</span>
-{% endwith %}
-      </div>
-
-      <div class="card-body">
-        <div class="mb-2 small text-muted">เพิ่มคะแนน(+): {{ s.add }} | หักคะแนน(–): {{ s.deduct }}</div>
-
-        {% if s.index == 5 and s.items_by_visit %}
-          
-          {% if s.per_visit_list %}
-            <div class="mb-2">
-              {% for pv in s.per_visit_list %}
-                <span class="badge bg-info text-dark me-2">
-                  ครั้งที่ {{ pv.visit }}: {{ pv.score }}/{{ pv.possible }} ({{ pv.percent }}%)
-                </span>
-              {% endfor %}
-            </div>
-          {% endif %}
-
-          
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th style="width:90px;">ครั้งที่</th>
-                  <th style="width:60px;">ข้อ</th>
-                  <th>เกณฑ์</th>
-                  <th style="width:100px;">ค่า</th>
-                  
-                </tr>
-              </thead>
-              <tbody>
-                {# เรียง 1 -> 2 -> 3 เพื่อความชัดเจน #}
-                {% for k, items in s.items_by_visit.items %}
-                  {% if k|stringformat:"s" == "1" %}
-                    {% for it in items %}
-                      <tr>
-                        <td>ครั้งที่ 1</td>
-                        <td>{{ it.index }}</td>
-                        <td>{{ it.text }}</td>
-                        <td>{{ it.value|upper }}</td>
+    /* --- Desktop Specific Tweaks --- */
+    @media (min-width: 768px) {
+        /* ให้ Header ยาวเหยียดได้ */
+        .header-title-box { flex-grow: 1; }
         
-                      </tr>
-                    {% endfor %}
-                  {% endif %}
-                {% endfor %}
+        /* ให้ปุ่มชิดขวาและขนาดพอดีคำ */
+        .header-btn-box { width: auto !important; justify-content: flex-end; }
+        
+        /* ปรับ Grid ข้อมูลให้สวยงามขึ้นในจอใหญ่ */
+        .info-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 1rem; }
+        .span-2 { grid-column: span 2; }
+        .span-3 { grid-column: span 3; }
+        .span-4 { grid-column: span 4; }
+        .span-6 { grid-column: span 6; }
+    }
+</style>
 
-                {% for k, items in s.items_by_visit.items %}
-                  {% if k|stringformat:"s" == "2" %}
-                    {% for it in items %}
-                      <tr>
-                        <td>ครั้งที่ 2</td>
-                        <td>{{ it.index }}</td>
-                        <td>{{ it.text }}</td>
-                        <td>{{ it.value|upper }}</td>
-                        
-                      </tr>
-                    {% endfor %}
-                  {% endif %}
-                {% endfor %}
+<div class="container py-3 md:py-4">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 border-bottom pb-3">
+        
+        <div class="header-title-box">
+            <h3 class="m-0 fw-bold text-dark" style="line-height: 1.4;">
+                รายละเอียดคะแนน OPD #{{ obj.id }}
+            </h3>
+            <span class="text-muted small">
+                บันทึกเมื่อ: {{ obj.created_at|date:"d/m/Y H:i" }} 
+                โดย 
+                {% if obj.created_by %}
+                    {% if obj.created_by.first_name %}
+                        {{ obj.created_by.first_name }} {{ obj.created_by.last_name }}
+                    {% else %}
+                        {{ obj.created_by.username }}
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </span>
+        </div>
 
-                {% for k, items in s.items_by_visit.items %}
-                  {% if k|stringformat:"s" == "3" %}
-                    {% for it in items %}
-                      <tr>
-                        <td>ครั้งที่ 3</td>
-                        <td>{{ it.index }}</td>
-                        <td>{{ it.text }}</td>
-                        <td>{{ it.value|upper }}</td>
-                        
-                      </tr>
-                    {% endfor %}
-                  {% endif %}
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-
-        {% else %}
-          
-          <div class="table-responsive">
-            <table class="table table-sm align-middle">
-              <thead>
-                <tr>
-                  <th style="width:60px;">ข้อ</th>
-                  <th>เกณฑ์</th>
-                  <th style="width:100px;">ค่า</th>
-                  
-                </tr>
-              </thead>
-              <tbody>
-                {% for it in s.items %}
-                <tr>
-                  <td>{{ it.index }}</td>
-                  <td>{{ it.text }}</td>
-                  <td>{{ it.value|upper }}</td>
-                  
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        {% endif %}
-      </div>
+        <div class="d-flex gap-2 w-100 header-btn-box">
+            <a href="{% url 'MRA:opd_score_list' %}" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-arrow-left"></i> ย้อนกลับ
+            </a>
+            <a href="{% url 'MRA:opd_score_create' %}" class="btn btn-primary px-4">
+                <i class="bi bi-plus-lg"></i> บันทึกใหม่
+            </a>
+            {% if user.is_superuser or user.is_staff or obj.created_by == user %}
+              <a href="{% url 'MRA:opd_score_edit' obj.pk %}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> แก้ไขข้อมูล OPD</a>
+            <a href="{% url 'MRA:opd_score_delete' obj.pk %}" class="btn btn-danger" onclick="return confirm('คุณแน่ใจหรือไม่ว่าต้องการลบรายการ OPD นี้?\nข้อมูลที่ลบจะไม่สามารถกู้คืนได้');">
+                <i class="fas fa-trash"></i> ลบข้อมูล
+              </a>
+                {% endif %}
+        </div>
     </div>
-    {% endfor %}
-  {% endif %}
+
+    <div class="card mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <h5 class="card-title text-primary border-bottom pb-2 mb-3 fw-bold">
+                <i class="bi bi-person-lines-fill"></i> ข้อมูลผู้ป่วย
+            </h5>
+            
+            <div class="row g-3">
+                <div class="col-6 col-md-2">
+                    <span class="label-text">Hcode</span>
+                    <span class="value-text">{{ obj.hcode }}</span>
+                </div>
+                <div class="col-6 col-md-2">
+                    <span class="label-text">HN</span>
+                    <span class="value-text">{{ obj.hn }}</span>
+                </div>
+                <div class="col-12 col-md-4">
+                    <span class="label-text">Hname</span>
+                    <span class="value-text">{{ obj.hname }}</span>
+                </div>
+                <div class="col-6 col-md-2">
+                    <span class="label-text">เลข ว.</span>
+                    <span class="value-text">{{ obj.pid }}</span>
+                </div>
+                <div class="col-6 col-md-2">
+                    <span class="label-text">ช่วงตรวจ</span>
+                    <span class="value-text">{{ obj.audit_period|format_audit_period|default:"-" }}</span>
+                </div>
+
+                <div class="col-12 col-md-6">
+                    <span class="label-text">Diagnosis</span>
+                    <span class="value-text text-break">{{ obj.diagnosis }}</span>
+                </div>
+                
+                <div class="col-12 col-md-6">
+                    <span class="label-text">ประเภท</span>
+                    <span class="value-text">
+                        {% if obj.is_general %}<span class="badge bg-light text-dark border">General</span>{% endif %}
+                        {% if obj.is_chronic %}<span class="badge bg-light text-dark border">Chronic</span>{% endif %}
+                        {% if obj.is_psychiatric %}<span class="badge bg-light text-dark border">Psychiatric</span>{% endif %}
+                    </span>
+                </div>
+                
+                <div class="col-12"><hr class="my-1 text-muted opacity-25"></div>
+
+                <div class="col-4 col-md-2">
+                    <span class="label-text">1st Visit</span>
+                    <span class="value-text">{{ obj.first_visit_date|thai_date:'en'|default:"-" }}</span>
+                </div>
+                <div class="col-4 col-md-2">
+                    <span class="label-text">Visit เริ่ม</span>
+                    <span class="value-text">{{ obj.visit_date_start|thai_date:'en'|default:"-" }}</span>
+                </div>
+                <div class="col-4 col-md-2">
+                    <span class="label-text">Visit ถึง</span>
+                    <span class="value-text">{{ obj.visit_date_end|thai_date:'en'|default:"-" }}</span>
+                </div>
+                
+                <div class="col-12 col-md-6 mt-3">
+                    <div class="p-3 border rounded bg-light h-100">
+                        <span class="label-text mb-1">สถานะการตรวจสอบ</span>
+                        {% if obj.review_status %}
+                            <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                <i class="bi bi-check-circle-fill text-success"></i> 
+                                {{ obj.get_review_status_display }}
+                            </div>
+                            {% if obj.review_status == 'has_issue' %}
+                                <div class="mt-2 p-2 bg-white border rounded text-danger small">
+                                    <strong>Note:</strong> {{ obj.note|default:"-" }}
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted fst-italic">--- ยังไม่มีการสรุปผล ---</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4 border-success shadow-sm">
+        <div class="card-body bg-success bg-opacity-10">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="m-0 fw-bold text-success">สรุปผลรวม</h5>
+                    <small class="text-muted">คิดเป็นร้อยละ</small>
+                </div>
+                <div class="text-end">
+                    <div class="display-6 fw-bold text-success">{{ overall_display.percent }}%</div>
+                    <div class="small text-muted">{{ overall_display.score }} / {{ overall_display.possible }} คะแนน</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if sections %}
+        {% for s in sections %}
+        <div class="card mb-3 shadow-sm border-0">
+            <div class="card-header py-2" style="background-color: #389750; color: white;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="pe-2">
+                        <span class="fw-bold">ส่วนที่ {{ s.index }}: {{ s.title }}</span>
+                    </div>
+                    <div class="text-end d-flex align-items-center gap-2">
+                        {% with sc=s.display_score|default:s.score ps=s.display_possible|default:s.possible %}
+                        <span class="badge bg-white text-success fs-6">{{ sc }}/{{ ps }}</span>
+                        {% endwith %}
+                        {% if s.locked %}
+                            <span class="badge bg-danger">LOCKED</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body p-0 p-md-3">
+                {% if s.add != 0 or s.deduct != 0 %}
+                <div class="p-2 bg-light border-bottom text-center small text-muted">
+                    เพิ่ม: <span class="text-success fw-bold">+{{ s.add }}</span> | 
+                    หัก: <span class="text-danger fw-bold">{{ s.deduct }}</span>
+                </div>
+                {% endif %}
+                
+                {% if s.index == 5 and s.items_by_visit %}
+                    {% if s.per_visit_list %}
+                        <div class="p-3 pb-0 d-flex flex-wrap gap-2">
+                            {% for pv in s.per_visit_list %}
+                                <span class="badge bg-info text-dark border">
+                                    ครั้งที่ {{ pv.visit }}: {{ pv.score }}/{{ pv.possible }} ({{ pv.percent }}%)
+                                </span>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for k, items in s.items_by_visit.items %}
+                    <div class="visit-group">
+                        <div class="bg-light px-3 py-2 mt-2 fw-bold small text-secondary border-top border-bottom">
+                            ครั้งที่ {{ k }}
+                        </div>
+                        <div class="px-3">
+                            {% for it in items %}
+                                <div class="mobile-item">
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-light text-dark border item-index">{{ it.index }}</span>
+                                        <span class="small">{{ it.text }}</span>
+                                    </div>
+                                    <span class="item-score score-{{ it.value|lower }}">
+                                        {{ it.value|upper }}
+                                    </span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                {% else %}
+                    <div class="px-3">
+                        {% for it in s.items %}
+                        <div class="mobile-item">
+                            <div class="d-flex gap-2">
+                                <span class="badge bg-light text-dark border item-index">{{ it.index }}</span>
+                                <span class="small">{{ it.text }}</span>
+                            </div>
+                            <span class="item-score score-{{ it.value|lower }}">
+                                {{ it.value|upper }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <div style="height: 60px;"></div>
 </div>
 {% endblock %}

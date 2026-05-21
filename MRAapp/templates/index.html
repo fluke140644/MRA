@@ -113,6 +113,18 @@ body {
   top: 0;
   background-color: var(--color-black);
 }
+
+.disabled-link {
+  pointer-events: none;   /* ปิดการคลิก */
+  cursor: not-allowed;    /* เมาส์เป็นรูปห้ามกด */
+  opacity: 0.6;           /* ทำให้ดูจางลง */
+}
+
+.disabled-link .but1 {
+  background-color: #ccc; 
+  color: #666;
+  border: 1px solid #aaa;
+}
 </style>
 
 
@@ -147,7 +159,7 @@ body {
   </button>
 </form>
       <a href="/listformdata"><button class="but1"><span class="label">บันทึกผลคะแนน OPD และ IPD</span></button></a>
-      <a href="/report"><button class="but1"><span class="label">รายงาน MRA</span></button></a>
+      <a href="/report" class="disabled-link"><button class="but1"><span class="label">รายงาน MRA</span></button></a>
       
     </div>
   </main>
